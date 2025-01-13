@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISA Distributors - Login Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>DISA Distributors</h1>
+        <p>Warehouse Management System</p>
+    </header>
+    <main>
+        <!-- Initial Screen -->
+        <div id="initialScreen">
+            <h2>What do you want to do?</h2>
+            <div class="button-group">
+                <button onclick="selectType('Corporate')">Corporate</button>
+                <button onclick="selectType('Customer')">Customer</button>
+            </div>
+        </div>
+
+        <!-- Corporate Selection -->
+        <div id="roleContainer" style="display: none;">
+            <h2>Who are you?</h2>
+            <div class="button-group">
+                <button onclick="selectRole('Managing Director')">Managing Director</button>
+                <button onclick="selectRole('General Manager')">General Manager</button>
+                <button onclick="selectRole('Warehouse')">Warehouse</button>
+                <button onclick="selectRole('HR')">HR</button>
+                <button onclick="selectRole('Finance')">Finance</button>
+                <button onclick="selectRole('IT')">IT</button>
+                <button onclick="selectRole('Supplier')">Supplier</button>
+            </div>
+            <button type="button" class="back-button" onclick="goBack()">Back</button>
+        </div>
+
+        <!-- Sub-Role Selection -->
+        <div id="subRoleContainer" style="display: none;">
+            <h3>Choose your specific role:</h3>
+            <div class="button-group" id="subRoleButtons"></div>
+            <button type="button" class="back-button" onclick="goBack()">Back</button>
+        </div>
+
+        <!-- Corporate Login Form -->
+        <div id="loginCorporate" style="display: none;">
+            <h3>Corporate Login</h3>
+            <form id="loginFormCorporate">
+                <label for="usernameCorporate">Username:</label>
+                <input type="text" id="usernameCorporate" placeholder="Enter your username" required>
+                <label for="passwordCorporate">Password:</label>
+                <input type="password" id="passwordCorporate" placeholder="Enter your password" required>
+                <button type="submit">Login</button>
+                <button type="button" class="back-button" onclick="goBack()">Back</button>
+            </form>
+        </div>
+
+        <!-- Customer Signup/Login Form -->
+        <div id="customerScreen" style="display: none;">
+            <h2>Customer</h2>
+            <div class="button-group">
+                <button onclick="toggleForm('signup')">Sign Up</button>
+                <button onclick="toggleForm('login')">Login</button>
+            </div>
+            <button type="button" class="back-button" onclick="goBack()">Back</button>
+        </div>
+
+        <div id="signupFormContainer" style="display: none;">
+            <h3>Sign Up</h3>
+            <form id="signupForm">
+                <label for="signupName">Name:</label>
+                <input type="text" id="signupName" placeholder="Enter your name" required>
+                <label for="signupEmail">Email:</label>
+                <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                <label for="signupPassword">Password:</label>
+                <input type="password" id="signupPassword" placeholder="Enter your password" required>
+                <button type="submit">Sign Up</button>
+                <button type="button" class="back-button" onclick="goBack()">Back</button>
+            </form>
+        </div>
+
+        <div id="loginFormContainer" style="display: none;">
+            <h3>Login</h3>
+            <form id="loginFormCustomer">
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                <button type="submit">Login</button>
+                <button type="button" class="back-button" onclick="goBack()">Back</button>
+            </form>
+        </div>
+
+        <!-- General Manager Dashboard -->
+        <div id="gmDashboard" style="display: none;">
+            <h2>General Manager Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="gmName">General Manager</span></p>
+                <p>Last Login: <span id="lastLogin"></span></p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <button onclick="checkReports()" class="dashboard-btn">
+                    <span class="icon">📊</span>
+                    Check Reports
+                </button>
+                <button onclick="manageOrderApprovals()" class="dashboard-btn">
+                    <span class="icon">✓</span>
+                    Order Approvals
+                </button>
+                <button onclick="giveFeedbackReport()" class="dashboard-btn">
+                    <span class="icon">📝</span>
+                    Give Feedback
+                </button>
+                <button onclick="reviewReport()" class="dashboard-btn">
+                    <span class="icon">📋</span>
+                    Review Reports
+                </button>
+                <button onclick="placeOrder()" class="dashboard-btn">
+                    <span class="icon">🛍️</span>
+                    Place Order
+                </button>
+                <button onclick="manageStaff()" class="dashboard-btn">
+                    <span class="icon">👥</span>
+                    Manage Staff
+                </button>
+                <button onclick="manageSuppliers()" class="dashboard-btn">
+                    <span class="icon">🏭</span>
+                    Manage Suppliers
+                </button>
+                <button onclick="reEnterCredentials()" class="dashboard-btn">
+                    <span class="icon">🔄</span>
+                    Re-enter Credentials
+                </button>
+                <button onclick="logout()" class="dashboard-btn logout">
+                    <span class="icon">🚪</span>
+                    Logout
+                </button>
+            </div>
+        </div>
+          <!-- Managing Director Dashboard -->
+          <div id="mdDashboard" style="display: none;">
+            <h2>Managing Director Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="mdName">Managing Director</span></p>
+                <p>Last Login: <span id="mdLastLogin"></span></p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <button onclick="checkSalesReports()" class="dashboard-btn">
+                    <span class="icon">📊</span>
+                    Check Sales Reports
+                </button>
+                <button onclick="issueTerminationLetters()" class="dashboard-btn">
+                    <span class="icon">📝</span>
+                    Issue Termination Letters
+                </button>
+                <button onclick="manageJobApplications()" class="dashboard-btn">
+                    <span class="icon">👥</span>
+                    Manage Job Applications
+                </button>
+                <button onclick="logout()" class="dashboard-btn logout">
+                    <span class="icon">🚪</span>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Warehouse Manager Dashboard -->
+        <div id="warehouseManagerDashboard" style="display: none;">
+            <h2>Warehouse Manager Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="wmName">Warehouse Manager</span></p>
+                <p>Last Login: <span id="wmLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="checkScannerMaintenance()" class="dashboard-btn">Scanner Maintenance</button>
+                <button onclick="checkDamagedStock()" class="dashboard-btn">Damaged Stock</button>
+                <button onclick="checkLowStockAlerts()" class="dashboard-btn">Low Stock Alerts</button>
+                <button onclick="informGM()" class="dashboard-btn">Inform GM</button>
+                <button onclick="returnDamagedStock()" class="dashboard-btn">Return Damaged Stock</button>
+                <button onclick="viewUpcomingDeliveries()" class="dashboard-btn">Upcoming Deliveries</button>
+                <button onclick="viewTotalDepartures()" class="dashboard-btn">Total Departures</button>
+                <button onclick="viewTotalArrivals()" class="dashboard-btn">Total Arrivals</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- Warehouse Assistant Dashboard -->
+        <div id="warehouseAssistantDashboard" style="display: none;">
+            <h2>Warehouse Assistant Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="waName">Warehouse Assistant</span></p>
+                <p>Last Login: <span id="waLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="recordNewStock()" class="dashboard-btn">Record New Stock</button>
+                <button onclick="sendOffStock()" class="dashboard-btn">Send Off Stock</button>
+                <button onclick="checkForDamageStock()" class="dashboard-btn">Check Damaged Stock</button>
+                <button onclick="checkForBarcodeLessCargo()" class="dashboard-btn">Check Barcodeless Cargo</button>
+                <button onclick="inquireFromSupplier()" class="dashboard-btn">Supplier Inquiry</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- Warehouse Driver Dashboard -->
+        <div id="warehouseDriverDashboard" style="display: none;">
+            <h2>Warehouse Driver Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="wdName">Warehouse Driver</span></p>
+                <p>Last Login: <span id="wdLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="checkForUpcomingDeliveries()" class="dashboard-btn">Upcoming Deliveries</button>
+                <button onclick="checkForNewArrivals()" class="dashboard-btn">New Arrivals</button>
+                <button onclick="viewTotalDeliveries()" class="dashboard-btn">Total Deliveries</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- Finance Manager Dashboard -->
+        <div id="financeManagerDashboard" style="display: none;">
+            <h2>Finance Manager Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="fmName">Finance Manager</span></p>
+                <p>Last Login: <span id="fmLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="checkAccounts()" class="dashboard-btn">Check Accounts</button>
+                <button onclick="manageNewPurchase()" class="dashboard-btn">New Purchase</button>
+                <button onclick="payrollManagement()" class="dashboard-btn">Payroll Management</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- HR Manager Dashboard -->
+        <div id="hrManagerDashboard" style="display: none;">
+            <h2>HR Manager Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="hrmName">HR Manager</span></p>
+                <p>Last Login: <span id="hrmLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="requestLetterApproval()" class="dashboard-btn">Letter Approval</button>
+                <button onclick="manageLeaves()" class="dashboard-btn">Manage Leaves</button>
+                <button onclick="reviewHRReports()" class="dashboard-btn">Review Reports</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- Accountant Dashboard -->
+        <div id="accountantDashboard" style="display: none;">
+            <h2>Accountant Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="faName">Accountant</span></p>
+                <p>Last Login: <span id="faLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="uploadReports()" class="dashboard-btn">Upload Reports</button>
+                <button onclick="manageSalaryPayments()" class="dashboard-btn">Salary Payments</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- IT Dashboard -->
+        <div id="itDashboard" style="display: none;">
+            <h2>IT Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="itmName">IT Manager</span></p>
+                <p>Last Login: <span id="itmLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="manageSystemChanges()" class="dashboard-btn">System Changes</button>
+                <button onclick="fixSimpleErrors()" class="dashboard-btn">Fix Errors</button>
+                <button onclick="serviceBarcodeScanners()" class="dashboard-btn">Service Scanners</button>
+                <button onclick="maintainSoftwareServiceRecords()" class="dashboard-btn">Service Records</button>
+                <button onclick="checkBarcodeScannerStatus()" class="dashboard-btn">Scanner Status</button>
+                <button onclick="changeCredentials()" class="dashboard-btn">Change Credentials</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+
+        <!-- Supplier Dashboard -->
+        <div id="supplierDashboard" style="display: none;">
+            <h2>Supplier Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="supName">Supplier</span></p>
+                <p>Last Login: <span id="supLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="checkForNewOrders()" class="dashboard-btn">New Orders</button>
+                <button onclick="prepareOrders()" class="dashboard-btn">Prepare Orders</button>
+                <button onclick="updatePrices()" class="dashboard-btn">Update Prices</button>
+                <button onclick="updateStock()" class="dashboard-btn">Update Stock</button>
+                <button onclick="logout()" class="dashboard-btn logout"><span class="icon">🚪</span>Logout</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
