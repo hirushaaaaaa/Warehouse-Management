@@ -108,32 +108,37 @@ function validateCredentials(username, password, role, subRole) {
     return roleConfig.validUsernames.includes(username);
 }
 
-// Switch screens with history tracking
-function switchScreens(show) {
+// Hide all screens including login forms
+function hideAllScreens() {
     const screens = [
-        "initialScreen",
-        "roleContainer",
-        "subRoleContainer",
-        "loginCorporate",
-        "customerScreen",
-        "signupFormContainer",
-        "loginFormContainer",
-        "gmDashboard",
-        "mdDashboard",
-        "warehouseManagerDashboard",
-        "warehouseAssistantDashboard",
-        "warehouseDriverDashboard",
-        "hrManagerDashboard",
-        "financeManagerDashboard",
-        "accountantDashboard",
-        "itDashboard",
-        "supplierDashboard"
+        'initialScreen',
+        'roleContainer',
+        'subRoleContainer',
+        'loginCorporate',
+        'customerScreen',
+        'signupFormContainer',
+        'loginFormContainer',
+        'gmDashboard',
+        'mdDashboard',
+        'warehouseManagerDashboard',
+        'warehouseAssistantDashboard',
+        'warehouseDriverDashboard',
+        'financeManagerDashboard',
+        'hrManagerDashboard',
+        'hrClerkDashboard',
+        'accountantDashboard',
+        'itDashboard',
+        'supplierDashboard'
     ];
     
     screens.forEach(screen => {
         document.getElementById(screen).style.display = "none";
     });
+}
 
+// Switch screens with history tracking
+function switchScreens(show) {
+    hideAllScreens();
     document.getElementById(show).style.display = "block";
     currentScreen = show;
     screenHistory.push(show);
@@ -164,13 +169,14 @@ function toggleForm(formType) {
     }
 }
 
-// Event Listeners for Forms
 document.getElementById('loginFormCorporate').addEventListener('submit', function(e) {
     e.preventDefault();
     const username = document.getElementById('usernameCorporate').value.toLowerCase();
     const password = document.getElementById('passwordCorporate').value;
 
     if (validateCredentials(username, password, selectedRole, selectedSubRole)) {
+        hideAllScreens(); // Hide all screens including login form
+        
         switch(selectedRole) {
             case "Managing Director":
                 showMDDashboard();
@@ -185,6 +191,7 @@ document.getElementById('loginFormCorporate').addEventListener('submit', functio
                 break;
             case "HR":
                 if (selectedSubRole === "Manager") showHRManagerDashboard();
+                else if (selectedSubRole === "Clerk") showHRClerkDashboard();
                 break;
             case "Finance":
                 if (selectedSubRole === "Manager") showFinanceManagerDashboard();
@@ -199,10 +206,16 @@ document.getElementById('loginFormCorporate').addEventListener('submit', functio
             default:
                 alert("Role not implemented");
         }
+        
+        // Clear the form
+        document.getElementById('usernameCorporate').value = '';
+        document.getElementById('passwordCorporate').value = '';
+        
     } else {
         alert("Invalid credentials for selected role");
     }
 });
+
 
 document.getElementById('signupForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -218,13 +231,18 @@ document.getElementById('signupForm').addEventListener('submit', function(e) {
     }
 });
 
+// Modified customer login form event listener
 document.getElementById('loginFormCustomer').addEventListener('submit', function(e) {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
     if (email && password) {
+        hideAllScreens(); // Hide all screens including login form
         alert("Login successful! Database integration pending.");
+        // Clear the form
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
     } else {
         alert("Please fill in all fields");
     }
@@ -267,6 +285,13 @@ function showHRManagerDashboard() {
     document.getElementById('hrmLastLogin').textContent = new Date().toLocaleString();
 }
 
+function showHRClerkDashboard() {
+    hideAllDashboards();
+    document.getElementById('hrClerkDashboard').style.display = 'block';
+    document.getElementById('hrcLastLogin').textContent = new Date().toLocaleString();
+}
+
+
 function showFinanceManagerDashboard() {
     hideAllDashboards();
     document.getElementById('financeManagerDashboard').style.display = 'block';
@@ -295,7 +320,7 @@ function hideAllDashboards() {
     const dashboards = [
         'mdDashboard', 'gmDashboard', 'warehouseManagerDashboard',
         'warehouseAssistantDashboard', 'warehouseDriverDashboard',
-        'financeManagerDashboard', 'hrManagerDashboard', 'accountantDashboard',
+        'financeManagerDashboard', 'hrManagerDashboard', 'hrClerkDashboard', 'accountantDashboard',
         'itDashboard', 'supplierDashboard'
     ];
     dashboards.forEach(dashboard => {
@@ -321,15 +346,6 @@ function manageOrderApprovals() {
         </div>
     `);
 }
-function manageOrderApprovals() {
-    showModal("Order Approvals", `
-        <h3>Pending Approvals</h3>
-        <div class="no-data-message">
-            <p>No pending orders found. Database integration pending.</p>
-        </div>
-    `);
-}
-
 function giveFeedbackReport() {
     showModal("Give Feedback", `
         <h3>Feedback Form</h3>
@@ -572,6 +588,69 @@ function requestLetterApproval() {
             <textarea id="letterContent" placeholder="Enter letter content" required></textarea>
             <button type="submit">Request Approval</button>
             <p class="note">Note: Approval requests will not be saved until database integration.</p>
+        </form>
+    `);
+}
+
+//HR Clerk specific functions
+function handleLeaveRequest() {
+    showModal("Leave Request Handler", `
+        <h3>Process Leave Requests</h3>
+        <form id="leaveRequestForm">
+            <select id="employeeSelect" required>
+                <option value="">Select Employee</option>
+                <option value="emp1">Employee 1</option>
+                <option value="emp2">Employee 2</option>
+            </select>
+            <select id="leaveType" required>
+                <option value="">Select Leave Type</option>
+                <option value="annual">Annual Leave</option>
+                <option value="sick">Sick Leave</option>
+                <option value="personal">Personal Leave</option>
+            </select>
+            <input type="date" placeholder="Start Date" required>
+            <input type="date" placeholder="End Date" required>
+            <textarea placeholder="Comments" required></textarea>
+            <button type="submit">Process Request</button>
+            <p class="note">Note: Leave requests will not be saved until database integration.</p>
+        </form>
+    `);
+}
+
+function manageMeetings() {
+    showModal("Meeting Management", `
+        <h3>Schedule/Manage Meetings</h3>
+        <form id="meetingForm">
+            <input type="text" placeholder="Meeting Title" required>
+            <input type="datetime-local" required>
+            <input type="text" placeholder="Location/Meeting Room" required>
+            <textarea placeholder="Meeting Agenda" required></textarea>
+            <select multiple id="attendees" required>
+                <option value="dept1">Department 1</option>
+                <option value="dept2">Department 2</option>
+                <option value="dept3">Department 3</option>
+            </select>
+            <button type="submit">Schedule Meeting</button>
+            <p class="note">Note: Meeting schedules will not be saved until database integration.</p>
+        </form>
+    `);
+}
+
+function uploadHRReports() {
+    showModal("HR Reports Upload", `
+        <h3>Upload HR Reports</h3>
+        <form id="hrReportUploadForm">
+            <select id="reportType" required>
+                <option value="">Select Report Type</option>
+                <option value="attendance">Attendance Report</option>
+                <option value="performance">Performance Report</option>
+                <option value="leave">Leave Status Report</option>
+                <option value="recruitment">Recruitment Report</option>
+            </select>
+            <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+            <textarea placeholder="Report Description" required></textarea>
+            <button type="submit">Upload Report</button>
+            <p class="note">Note: Reports will not be saved until database integration.</p>
         </form>
     `);
 }
