@@ -85,28 +85,63 @@ document.getElementById('loginFormCorporate').addEventListener('submit', functio
 // Handle Customer Signup Form Submission
 document.getElementById('signupForm').addEventListener('submit', function (e) {
     e.preventDefault();
+
     const name = document.getElementById('signupName').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
 
-    if (name && email && password) {
-        alert("Sign-up successful! Database integration pending.");
-        switchScreens("loginFormContainer");
-    } else {
-        alert("Please fill in all fields");
-    }
+    fetch('http://localhost:5000/api/customer/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+    })
+        .then(response => response.text())
+        .then(data => {
+            alert(data); // Show success message
+        })
+        .catch(error => console.error('Error signing up:', error));
 });
 
 // Handle Customer Login Form Submission
-document.getElementById('loginFormCustomer').addEventListener('submit', function (e) {
+document.getElementById('loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
+
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
-    if (email && password) {
-        hideAllScreens();
-        alert("Login successful! Database integration pending.");
-    } else {
-        alert("Please fill in all fields");
-    }
+    console.log('Sending login request...'); // Debugging
+
+    fetch('http://localhost:5000/api/customer/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    })
+        .then(response => {
+            console.log('Response received:', response); // Debugging
+            if (!response.ok) {
+                // Handle HTTP errors (e.g., 400, 500)
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Login failed');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data); // Debugging
+            if (data.token) {
+                // Store the token and customer details in localStorage
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('customer', JSON.stringify(data.customer));
+
+                alert('Login successful');
+                // Redirect to customer dashboard or home page
+                window.location.href = '/customer-dashboard.html';
+            } else {
+                alert(data.message || 'Login failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error logging in:', error); // Debugging
+            alert(error.message || 'Login failed');
+        });
 });

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="styles/styles.css"> <!-- Link to the CSS file -->
+</head>
+<body>
+    <header class="dashboard-header">
+        <h1>Welcome to Your Dashboard</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+    <main class="dashboard-main">
+        <section class="dashboard-section">
+            <h2>Your Profile</h2>
+            <div class="profile-info">
+                <p><strong>Name:</strong> <span id="customerName"></span></p>
+                <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+            </div>
+        </section>
+        <section class="dashboard-section">
+            <h2>Recent Activity</h2>
+            <div class="activity-list">
+                <p>No recent activity.</p>
+            </div>
+        </section>
+    </main>
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if the user is logged in
+        const token = localStorage.getItem('token');
+        const customer = JSON.parse(localStorage.getItem('customer'));
+
+        if (!token || !customer) {
+            // Redirect to the login page if not logged in
+            window.location.href = '/index.html';
+        } else {
+            // Display customer details
+            document.getElementById('customerName').textContent = customer.name;
+            document.getElementById('customerEmail').textContent = customer.email;
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('customer');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>
