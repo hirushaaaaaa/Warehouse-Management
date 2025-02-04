@@ -90,7 +90,7 @@ document.getElementById('signupForm').addEventListener('submit', function (e) {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
 
-    fetch('http://localhost:5000/api/customer/signup', {
+    fetch('http://localhost:5002/api/customer/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -111,7 +111,7 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
 
     console.log('Sending login request...'); // Debugging
 
-    fetch('http://localhost:5000/api/customer/login', {
+    fetch('http://localhost:5002/api/customer/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
