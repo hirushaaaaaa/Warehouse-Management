@@ -9,6 +9,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+// Middleware
+app.use(bodyParser.json());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 // Create a MySQL connection
 const db = mysql.createConnection({
     host: 'localhost',
@@ -21,6 +29,11 @@ const db = mysql.createConnection({
 db.connect((err) => {
     if (err) throw err;
     console.log('MySQL connected...');
+});
+
+// Test route
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' });
 });
 
 // Customer Signup Endpoint
@@ -90,8 +103,82 @@ app.post('/api/customer/login', async (req, res) => {
         });
     });
 });
+// HR Letter Approval Endpoint
+app.post('/api/hr/letter', (req, res) => {
+    console.log('Received letter request:', req.body);
+    
+    const { letterType, letterContent } = req.body;
+    
+    if (!letterType || !letterContent) {
+        console.log('Missing required fields');
+        return res.status(400).json({
+            success: false,
+            message: 'Letter type and content are required'
+        });
+    }
+    
+    const sql = 'INSERT INTO hr_letter (letter_type, letter_content) VALUES (?, ?)';
+    db.query(sql, [letterType, letterContent], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error submitting letter for approval: ' + err.message 
+            });
+        }
+        
+        console.log('Letter inserted successfully:', result);
+        res.status(201).json({ 
+            success: true, 
+            message: 'Letter submitted for approval successfully',
+            letterId: result.insertId
+        });
+    });
+});
+
+// Get HR Letters Endpoint
+app.get('/api/hr/letters', (req, res) => {
+    const sql = 'SELECT * FROM hr_letter ORDER BY hrl_no DESC';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error fetching letters' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            letters: results 
+        });
+    });
+});
+
+// Update Letter Approval Status Endpoint
+app.put('/api/hr/letter/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const sql = 'UPDATE hr_letter SET approval_status = ? WHERE hrl_no = ?';
+    db.query(sql, [status, id], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error updating letter status' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Letter status updated successfully' 
+        });
+    });
+});
+
 // Start the server
-const PORT = 5000;
+const PORT = 5002;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
