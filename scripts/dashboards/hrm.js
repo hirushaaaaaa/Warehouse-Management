@@ -4,6 +4,8 @@ function showHRManagerDashboard() {
     document.getElementById('hrmLastLogin').textContent = new Date().toLocaleString();
 }
 
+
+
 // HR Manager Functions (continued)
 function requestLetterApproval() {
     const modalContent = `
@@ -84,3 +86,128 @@ function requestLetterApproval() {
         }
     });
 }
+
+function leaveRequests() {
+    // Fetch leave requests from the server
+    fetch('http://localhost:5002/api/leaves')
+        .then(response => {
+            console.log('Response:', response); // Debugging
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data:', data); // Debugging
+            if (data.success) {
+                const leaveRequests = data.leaves;
+                let modalContent = `
+                    <h3>Pending Leave Requests</h3>
+                    <div class="leaves-container">`;
+
+                if (leaveRequests.length === 0) {
+                    modalContent += `
+                        <div class="no-data-message">
+                            <p>No leave requests found.</p>
+                        </div>`;
+                } else {
+                    modalContent += `
+                        <table class="leaves-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Leave Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Comments</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                    leaveRequests.forEach(leave => {
+                        modalContent += `
+                            <tr>
+                                <td>${leave.employee_id}</td>
+                                <td>${leave.leave_type}</td>
+                                <td>${new Date(leave.start_date).toLocaleDateString()}</td>
+                                <td>${new Date(leave.end_date).toLocaleDateString()}</td>
+                                <td>${leave.comments || 'N/A'}</td>
+                                <td>${leave.status}</td>
+                                <td>
+                                    ${leave.status === 'PENDING' ? `
+                                        <button onclick="approveLeave(${leave.leave_id})" class="btn btn-success btn-sm">Approve</button>
+                                        <button onclick="rejectLeave(${leave.leave_id})" class="btn btn-danger btn-sm">Reject</button>
+                                    ` : 'No actions available'}
+                                </td>
+                            </tr>`;
+                    });
+
+                    modalContent += `
+                            </tbody>
+                        </table>`;
+                }
+
+                modalContent += `</div>`;
+                showModal("Manage Leaves", modalContent);
+            } else {
+                showModal("Error", `
+                    <div class="error-message">
+                        <p>Error: ${data.message}</p>
+                    </div>
+                `);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal("Error", `
+                <div class="error-message">
+                    <p>Failed to fetch leave requests. Please try again later.</p>
+                </div>
+            `);
+        });
+}
+
+
+
+// Approve Leave Request
+function approveLeave(leaveId) {
+    updateLeaveStatus(leaveId, 'APPROVED');
+}
+
+// Reject Leave Request
+function rejectLeave(leaveId) {
+    updateLeaveStatus(leaveId, 'REJECTED');
+}
+
+// Update Leave Status
+function updateLeaveStatus(leaveId, status) {
+    fetch(`http://localhost:5002/api/leaves/${leaveId}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Leave status updated successfully!');
+            manageLeaves(); // Refresh the leave requests list
+        } else {
+            alert('Error updating leave status: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update leave status. Please try again.');
+    });
+}
+
+

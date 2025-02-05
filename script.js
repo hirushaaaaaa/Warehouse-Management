@@ -590,7 +590,42 @@ function requestLetterApproval() {
             <p class="note">Note: Approval requests will not be saved until database integration.</p>
         </form>
     `);
+
+    // Add form submission event listener
+    const form = document.getElementById('letterApprovalForm');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent form from refreshing the page
+
+        const letterType = document.getElementById('letterType').value;
+        const letterContent = document.getElementById('letterContent').value;
+
+        // Send data to backend (example using fetch)
+        fetch('/api/letter-approval', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                letterType: letterType,
+                letterContent: letterContent
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Letter Approval Request Sent!');
+                // Optionally, close modal or reset form
+            } else {
+                alert('Failed to send letter approval request');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error sending letter approval request');
+        });
+    });
 }
+
 
 //HR Clerk specific functions
 function handleLeaveRequest() {

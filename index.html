@@ -310,31 +310,40 @@
         </div>
 
         <!-- HR Manager Dashboard -->
-        <div id="hrManagerDashboard" style="display: none;">
-    <h2>HR Manager Dashboard</h2>
-    <div class="user-info">
-        <p>Welcome, <span id="hrmName">HR Manager</span></p>
-        <p>Last Login: <span id="hrmLastLogin"></span></p>
-    </div>
-    <div class="dashboard-grid">
-        <button onclick="requestLetterApproval()" class="dashboard-btn">
-            <span class="icon">📄</span>
-            Letter Approval
-        </button>
-        <button onclick="manageLeaves()" class="dashboard-btn">
-            <span class="icon">📅</span>
-            Manage Leaves
-        </button>
-        <button onclick="reviewHRReports()" class="dashboard-btn">
-            <span class="icon">📊</span>
-            Review Reports
-        </button>
-        <button onclick="logout()" class="dashboard-btn logout">
-            <span class="icon">🚪</span>
-            Logout
-        </button>
-    </div>
-</div>
+         
+        <div id="hrManagerDashboard" style="display: block;">
+            <h2>HR Manager Dashboard</h2>
+            <div class="user-info">
+                <p>Welcome, <span id="hrmName">HR Manager</span></p>
+                <p>Last Login: <span id="hrmLastLogin"></span></p>
+            </div>
+            <div class="dashboard-grid">
+                <button onclick="requestLetterApproval()" class="dashboard-btn">
+                    <span class="icon">📄</span>
+                    Letter Approval
+                </button>
+                <button onclick="leaveRequests()"class="dashboard-btn">
+                    <span class="icon">📅</span>
+                    Leave Requests
+                </button>
+                <button onclick="reviewHRReports()" class="dashboard-btn">
+                    <span class="icon">📊</span>
+                    Review Reports
+                </button>
+            </button>
+            
+                <button onclick="logout()" class="dashboard-btn logout">
+                    <span class="icon">🚪</span>
+                    Logout
+                
+            </div>
+        
+            <!-- Leave Management Section -->
+            <div id="leaveManagementSection" style="display: none; margin-top: 20px;">
+                <h3>Manage Leave Requests</h3>
+                <div id="leaveRequestsList"></div>
+            </div>
+        </div>
 
         <!-- Accountant Dashboard -->
         <div id="accountantDashboard" style="display: none;">
@@ -385,7 +394,7 @@
             Logout
         </button>
     </div>
-</div>`;
+</div>;
 
         <!-- IT Dashboard -->
         <div id="itDashboard" style="display: none;">

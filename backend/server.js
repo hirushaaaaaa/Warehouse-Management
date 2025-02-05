@@ -9,10 +9,25 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+const allowedOrigins = [
+    'http://localhost:5002', 
+    'https://your-frontend-domain.com' 
+];
+
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({
-    origin: '*',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (e.g., mobile apps, Postman)
+        if (!origin) return callback(null, true);
+
+        // Check if the origin is allowed
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -32,7 +47,7 @@ db.connect((err) => {
 });
 
 // Test route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
     res.json({ message: 'Server is running!' });
 });
 
@@ -45,7 +60,7 @@ app.post('/api/customer/signup', async (req, res) => {
 
     // Insert the customer into the database
     const sql = 'INSERT INTO customers (name, email, password) VALUES (?, ?, ?)';
-    db.query(sql, [name, email, hashedPassword], (err, result) => {
+    db.query(sql, [name, email, hashedPassword], (err, _result) => {
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.status(400).send('Email already exists');
@@ -137,7 +152,7 @@ app.post('/api/hr/letter', (req, res) => {
 });
 
 // Get HR Letters Endpoint
-app.get('/api/hr/letters', (req, res) => {
+app.get('/api/hr/letters', (_req, res) => {
     const sql = 'SELECT * FROM hr_letter ORDER BY hrl_no DESC';
     db.query(sql, (err, results) => {
         if (err) {
@@ -161,7 +176,7 @@ app.put('/api/hr/letter/:id/status', (req, res) => {
     const { status } = req.body;
     
     const sql = 'UPDATE hr_letter SET approval_status = ? WHERE hrl_no = ?';
-    db.query(sql, [status, id], (err, result) => {
+    db.query(sql, [status, id], (err, _result) => {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).json({ 
@@ -176,6 +191,85 @@ app.put('/api/hr/letter/:id/status', (req, res) => {
         });
     });
 });
+
+// Leave Request Endpoint
+app.post('/api/leaves', (req, res) => {
+    const { employee_id, leave_type, start_date, end_date, comments } = req.body;
+    
+    // Validate required fields
+    if (!employee_id || !leave_type || !start_date || !end_date) {
+        return res.status(400).json({
+            success: false,
+            message: 'All fields are required'
+        });
+    }
+    
+    const sql = 'INSERT INTO leaves (employee_id, leave_type, start_date, end_date, comments) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [employee_id, leave_type, start_date, end_date, comments], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error submitting leave request'
+            });
+        }
+        
+        res.status(201).json({
+            success: true,
+            message: 'Leave request submitted successfully',
+            leaveId: result.insertId
+        });
+    });
+});
+
+// Get All Leave Requests Endpoint
+app.get('/api/leaves', (_req, res) => {
+    const sql = 'SELECT * FROM leaves ORDER BY created_at DESC';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error fetching leave requests' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            leaves: results 
+        });
+    });
+});
+
+// Update Leave Status Endpoint
+app.put('/api/leaves/:id/status', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['APPROVED', 'REJECTED'].includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid status. Must be APPROVED or REJECTED'
+        });
+    }
+    
+    const sql = 'UPDATE leaves SET status = ? WHERE leave_id = ?';
+    db.query(sql, [status, id], (err, _result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error updating leave status' 
+            });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Leave status updated successfully' 
+        });
+    });
+});
+
 
 // Start the server
 const PORT = 5002;

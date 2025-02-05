@@ -4,29 +4,76 @@ function showHRClerkDashboard() {
     document.getElementById('hrcLastLogin').textContent = new Date().toLocaleString();
 }
 
-//HR Clerk specific functions
 function handleLeaveRequest() {
     showModal("Leave Request Handler", `
         <h3>Process Leave Requests</h3>
-        <form id="leaveRequestForm">
-            <select id="employeeSelect" required>
-                <option value="">Select Employee</option>
-                <option value="emp1">Employee 1</option>
-                <option value="emp2">Employee 2</option>
-            </select>
-            <select id="leaveType" required>
-                <option value="">Select Leave Type</option>
-                <option value="annual">Annual Leave</option>
-                <option value="sick">Sick Leave</option>
-                <option value="personal">Personal Leave</option>
-            </select>
-            <input type="date" placeholder="Start Date" required>
-            <input type="date" placeholder="End Date" required>
-            <textarea placeholder="Comments" required></textarea>
-            <button type="submit">Process Request</button>
-            <p class="note">Note: Leave requests will not be saved until database integration.</p>
-        </form>
+        <div class="modal-content">
+            <form id="leaveRequestForm" onsubmit="submitLeaveRequest(event)">
+                <div class="form-group">
+                    <select id="employeeSelect" name="employee_id" required>
+                        <option value="">Select Employee</option>
+                        <option value="emp1">Employee 1</option>
+                        <option value="emp2">Employee 2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="leaveType" name="leave_type" required>
+                        <option value="">Select Leave Type</option>
+                        <option value="annual">Annual Leave</option>
+                        <option value="sick">Sick Leave</option>
+                        <option value="personal">Personal Leave</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="date" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <input type="date" name="end_date" required>
+                </div>
+                <div class="form-group">
+                    <textarea name="comments" placeholder="Comments" required></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="submit-btn">Submit Leave Request</button>
+                </div>
+            </form>
+        </div>
     `);
+}
+
+async function submitLeaveRequest(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = {
+        employee_id: form.employee_id.value,
+        leave_type: form.leave_type.value,
+        start_date: form.start_date.value,
+        end_date: form.end_date.value,
+        comments: form.comments.value
+    };
+
+    try {
+        const response = await fetch('http://localhost:5002/api/leaves', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Leave request submitted successfully!');
+            // Close the modal or refresh the page as needed
+        } else {
+            alert('Error submitting leave request: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error submitting leave request. Please try again.');
+    }
 }
 
 function manageMeetings() {
