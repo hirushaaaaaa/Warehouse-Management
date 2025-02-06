@@ -9,25 +9,11 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const allowedOrigins = [
-    'http://localhost:5002', 
-    'https://your-frontend-domain.com' 
-];
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (e.g., mobile apps, Postman)
-        if (!origin) return callback(null, true);
-
-        // Check if the origin is allowed
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -270,6 +256,51 @@ app.put('/api/leaves/:id/status', (req, res) => {
     });
 });
 
+app.post('/api/suppliers', async (req, res) => {
+    const { sup_id, name, no, street, city, email, tele_no, password } = req.body;
+    
+    // Validate required fields
+    if (!sup_id || !name || !no || !street || !city || !email || !tele_no || !password) {
+        return res.status(400).json({
+            success: false,
+            message: 'All fields are required'
+        });
+    }
+    
+    try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const sql = 'INSERT INTO Supplier (sup_id, Name, No, Street, City, Email, Tele_no, Password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        db.query(sql, [sup_id, name, no, street, city, email, tele_no, hashedPassword], (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Supplier ID or Email already exists'
+                    });
+                }
+                return res.status(500).json({
+                    success: false,
+                    message: `Database error: ${err.message}`
+                });
+            }
+            
+            res.status(201).json({
+                success: true,
+                message: 'Supplier added successfully',
+                supplierId: result.insertId
+            });
+        });
+    } catch (error) {
+        console.error('Error processing request:', error);
+        res.status(500).json({
+            success: false,
+            message: `Error processing request: ${error.message}`
+        });
+    }
+});
 
 // Start the server
 const PORT = 5002;

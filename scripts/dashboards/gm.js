@@ -76,13 +76,100 @@ function manageStaff() {
 }
 
 function manageSuppliers() {
-    showModal("Supplier Management", `
-        <h3>Supplier Directory</h3>
-        <div class="no-data-message">
-            <p>No suppliers found. Database integration pending.</p>
-        </div>
-    `);
+    const modalContent = `
+        <h3>Add New Supplier</h3>
+        <form id="addSupplierForm" onsubmit="saveSupplier(event)">
+            <div class="form-group">
+                <label for="supId">Supplier ID:</label>
+                <input type="text" id="supId" name="supId" required maxlength="10" 
+                    pattern="[A-Za-z0-9]+" title="Only letters and numbers allowed"
+                    class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required maxlength="100" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="no">Building No:</label>
+                <input type="text" id="no" name="no" required maxlength="10" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="street">Street:</label>
+                <input type="text" id="street" name="street" required maxlength="100" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" required maxlength="50" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required maxlength="100" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="teleNo">Telephone:</label>
+                <input type="tel" id="teleNo" name="teleNo" required maxlength="20" 
+                    pattern="[0-9]+" title="Only numbers allowed"
+                    class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required 
+                    minlength="6" maxlength="50" 
+                    class="form-control">
+                <small class="form-text text-muted">Password must be at least 6 characters long</small>
+            </div>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Save Supplier</button>
+            </div>
+        </form>
+    `;
+
+    showModal("Add Supplier", modalContent);
 }
+
+function saveSupplier(event) {
+    event.preventDefault();
+    
+    // Clear any previous error messages
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.style.display = 'none';
+    
+    const formData = {
+        sup_id: document.getElementById('supId').value,
+        name: document.getElementById('name').value,
+        no: document.getElementById('no').value,
+        street: document.getElementById('street').value,
+        city: document.getElementById('city').value,
+        email: document.getElementById('email').value,
+        tele_no: document.getElementById('teleNo').value,
+        password: document.getElementById('password').value
+    };
+
+    fetch('http://localhost:5002/api/suppliers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Supplier added successfully!');
+            closeModal();
+        } else {
+            errorDiv.textContent = data.message || 'Error adding supplier. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        errorDiv.textContent = 'Network error. Please check your connection and try again.';
+        errorDiv.style.display = 'block';
+    });
+}
+
 
 function reEnterCredentials() {
     showModal("Re-enter Credentials", `
