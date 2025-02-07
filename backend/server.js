@@ -302,6 +302,160 @@ app.post('/api/suppliers', async (req, res) => {
     }
 });
 
+// New Staff Management Routes
+// Test endpoint
+app.get('/api/staff/test', (_req, res) => {
+    console.log('Staff API test endpoint hit');
+    res.json({
+        success: true,
+        message: 'Staff API is working'
+    });
+});
+
+// Get all staff members
+app.get('/api/staff', (_req, res) => {
+    console.log('Fetching staff data...');
+    
+    const sql = `
+        SELECT staff_id, role, name, email, tele_no, no, street, city 
+        FROM Staff 
+        ORDER BY role, name
+    `;
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching staff records',
+                error: err.message
+            });
+        }
+        
+        console.log(`Found ${results.length} staff records`);
+        res.json({
+            success: true,
+            staff: results
+        });
+    });
+});
+
+// Update staff member
+app.put('/api/staff/:id', (req, res) => {
+    const { id } = req.params;
+    const { name, email, tele_no, no, street, city } = req.body;
+    
+    // Input validation
+    if (!name || !email || !tele_no || !no || !street || !city) {
+        return res.status(400).json({
+            success: false,
+            message: 'All fields are required'
+        });
+    }
+    
+    // Role-specific table mapping
+    const roleTableMap = {
+        'Managing Director': { table: 'Managing_Director', idField: 'md_id' },
+        'General Manager': { table: 'General_Manager', idField: 'gm_id' },
+        'HR Manager': { table: 'HR_Manager', idField: 'hrm_id' },
+        'HR Clerk': { table: 'HR_Clerk', idField: 'hrc_id' },
+        'Finance Manager': { table: 'Finance_Manager', idField: 'fm_id' },
+        'Finance Accountant': { table: 'Finance_Accountant', idField: 'fa_id' },
+        'Warehouse Manager': { table: 'Warehouse_Manager', idField: 'wm_id' },
+        'Warehouse Assistant': { table: 'Warehouse_Assistant', idField: 'wa_id' },
+        'Warehouse Driver': { table: 'Warehouse_Driver', idField: 'wd_id' },
+        'IT Manager': { table: 'IT_Manager', idField: 'itm_id' }
+    };
+    
+    // Start transaction
+    db.beginTransaction(err => {
+        if (err) {
+            return res.status(500).json({
+                success: false,
+                message: 'Error starting database transaction'
+            });
+        }
+        
+        // First get the staff member's role
+        db.query('SELECT role FROM Staff WHERE staff_id = ?', [id], (err, results) => {
+            if (err || results.length === 0) {
+                return db.rollback(() => {
+                    res.status(404).json({
+                        success: false,
+                        message: 'Staff member not found'
+                    });
+                });
+            }
+            
+            const role = results[0].role;
+            const roleInfo = roleTableMap[role];
+            
+            if (!roleInfo) {
+                return db.rollback(() => {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Invalid role'
+                    });
+                });
+            }
+            
+            // Update Staff table
+            const staffUpdateSql = `
+                UPDATE Staff 
+                SET name = ?, email = ?, tele_no = ?, no = ?, street = ?, city = ?
+                WHERE staff_id = ?
+            `;
+            
+            db.query(staffUpdateSql, [name, email, tele_no, no, street, city, id], (err) => {
+                if (err) {
+                    return db.rollback(() => {
+                        res.status(500).json({
+                            success: false,
+                            message: 'Error updating Staff table'
+                        });
+                    });
+                }
+                
+                // Update role-specific table for ONLY that specific role
+                const roleTableSql = `
+                    UPDATE ${roleInfo.table}
+                    SET Name = ?, Email = ?, Tele_no = ?, No = ?, Street = ?, City = ?
+                    WHERE ${roleInfo.idField} = ?
+                `;
+                
+                db.query(roleTableSql, [name, email, tele_no, no, street, city, id], (err) => {
+                    if (err) {
+                        return db.rollback(() => {
+                            res.status(500).json({
+                                success: false,
+                                message: `Error updating ${roleInfo.table} table`
+                            });
+                        });
+                    }
+                    
+                    // Commit the transaction
+                    db.commit(err => {
+                        if (err) {
+                            return db.rollback(() => {
+                                res.status(500).json({
+                                    success: false,
+                                    message: 'Error committing transaction'
+                                });
+                            });
+                        }
+                        
+                        res.json({
+                            success: true,
+                            message: 'Staff member updated successfully',
+                            staffId: id
+                        });
+                    });
+                });
+            });
+        });
+    });
+});
+
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {

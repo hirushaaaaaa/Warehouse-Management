@@ -95,3 +95,39 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.staff-management-container {
+    width: 100%;
+    max-width: none;
+    overflow-x: auto;
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.staff-table th, .staff-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    white-space: nowrap;
+}
+
+.staff-table input {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 100px;
+}
+
+.modal-content {
+    width: 95vw;
+    max-width: 1600px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.no-data-message {
+    text-align: center;
+    color: red;
+    padding: 20px;
+}
