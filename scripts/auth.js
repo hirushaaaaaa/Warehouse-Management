@@ -1,60 +1,64 @@
 // auth.js
+let selectedRole = "";
+let selectedSubRole = "";
+
+// Role configurations with validation rules
+const validCredentials = {
+    "Managing Director": { validUsernames: ["md"], subRoles: null },
+    "General Manager": { validUsernames: ["gm"], subRoles: null },
+    "HR": { validUsernames: ["hrm", "hrc"], subRoles: { "Manager": ["hrm"], "Clerk": ["hrc"] } },
+    "Finance": { validUsernames: ["fm", "fa"], subRoles: { "Manager": ["fm"], "Accountant": ["fa"] } },
+    "Warehouse": { validUsernames: ["wm", "wa", "wd"], subRoles: { "Manager": ["wm"], "Assistant": ["wa"], "Driver": ["wd"] } },
+    "IT": { validUsernames: ["itm"], subRoles: null },
+    "Supplier": { validUsernames: ["sup"], subRoles: null }
+};
+
 // Navigate to the selected type (Corporate or Customer)
 function selectType(type) {
     if (type === "Corporate") {
-        switchScreens("roleContainer");
+        showCorporateLogin();
     } else if (type === "Customer") {
         switchScreens("customerScreen");
     }
 }
 
-// Handle Corporate Role Selection
-function selectRole(role) {
-    selectedRole = role;
-    const subRoleContainer = document.getElementById("subRoleContainer");
-    const subRoleButtons = document.getElementById("subRoleButtons");
-    subRoleButtons.innerHTML = "";
+// Show the unified corporate login form
+function showCorporateLogin() {
+    hideAllScreens();
+    document.getElementById('corporateLogin').style.display = 'block';
+    screenHistory.push('corporateLogin');
+}
 
-    if (role === "Warehouse") {
-        createSubRoleButtons(["Manager", "Driver", "Assistant"]);
-    } else if (role === "HR") {
-        createSubRoleButtons(["Manager", "Clerk"]);
-    } else if (role === "Finance") {
-        createSubRoleButtons(["Manager", "Accountant"]);
+// Update sub-roles based on selected role
+function updateSubRoles() {
+    const roleSelect = document.getElementById('roleSelect');
+    const subRoleGroup = document.getElementById('subRoleGroup');
+    const subRoleSelect = document.getElementById('subRoleSelect');
+    selectedRole = roleSelect.value;
+    selectedSubRole = "";
+
+    // Clear existing options
+    subRoleSelect.innerHTML = '<option value="">Select Sub Role</option>';
+
+    const roleConfig = validCredentials[selectedRole];
+    if (roleConfig && roleConfig.subRoles) {
+        // Add new options
+        Object.keys(roleConfig.subRoles).forEach(subRole => {
+            const option = document.createElement('option');
+            option.value = subRole;
+            option.textContent = subRole;
+            subRoleSelect.appendChild(option);
+        });
+        subRoleGroup.style.display = 'block';
+        subRoleSelect.required = true;
     } else {
-        switchScreens("loginCorporate");
-        return;
+        subRoleGroup.style.display = 'none';
+        subRoleSelect.required = false;
     }
-
-    switchScreens("subRoleContainer");
 }
 
-// Create sub-role buttons dynamically
-function createSubRoleButtons(subRoles) {
-    const subRoleButtons = document.getElementById("subRoleButtons");
-    subRoles.forEach(subRole => {
-        const button = document.createElement("button");
-        button.textContent = subRole;
-        button.onclick = () => {
-            selectedSubRole = subRole;
-            switchScreens("loginCorporate");
-        };
-        subRoleButtons.appendChild(button);
-    });
-}
-
-// Role-specific username validation
+// Validate credentials
 function validateCredentials(username, password, role, subRole) {
-    const validCredentials = {
-        "Managing Director": { validUsernames: ["md"], subRoles: null },
-        "General Manager": { validUsernames: ["gm"], subRoles: null },
-        "HR": { validUsernames: ["hrm", "hrc"], subRoles: { "Manager": ["hrm"], "Clerk": ["hrc"] } },
-        "Finance": { validUsernames: ["fm", "fa"], subRoles: { "Manager": ["fm"], "Accountant": ["fa"] } },
-        "Warehouse": { validUsernames: ["wm", "wa", "wd"], subRoles: { "Manager": ["wm"], "Assistant": ["wa"], "Driver": ["wd"] } },
-        "IT": { validUsernames: ["itm"], subRoles: null },
-        "Supplier": { validUsernames: ["sup"], subRoles: null }
-    };
-
     if (password !== "123") return false;
 
     const roleConfig = validCredentials[role];
@@ -68,19 +72,22 @@ function validateCredentials(username, password, role, subRole) {
     return roleConfig.validUsernames.includes(username);
 }
 
-// Handle Corporate Login Form Submission
-document.getElementById('loginFormCorporate').addEventListener('submit', function (e) {
-    e.preventDefault();
-    const username = document.getElementById('usernameCorporate').value.toLowerCase();
-    const password = document.getElementById('passwordCorporate').value;
+// Handle corporate login form submission
+function handleCorporateLogin(event) {
+    event.preventDefault();
+    
+    const role = document.getElementById('roleSelect').value;
+    const subRole = document.getElementById('subRoleSelect').value;
+    const username = document.getElementById('username').value.toLowerCase();
+    const password = document.getElementById('password').value;
 
-    if (validateCredentials(username, password, selectedRole, selectedSubRole)) {
+    if (validateCredentials(username, password, role, subRole)) {
         hideAllScreens();
-        showDashboard(selectedRole, selectedSubRole);
+        showDashboard(role, subRole);
     } else {
         alert("Invalid credentials for selected role");
     }
-});
+}
 
 // Handle Customer Signup Form Submission
 document.getElementById('signupForm').addEventListener('submit', function (e) {

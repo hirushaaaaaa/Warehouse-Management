@@ -1,9 +1,7 @@
 // main.js
-// Track the current screen, screen history, and selected role
+// Track the current screen and screen history
 let currentScreen = "initialScreen";
 let screenHistory = ["initialScreen"];
-let selectedRole = "";
-let selectedSubRole = "";
 
 // Initialize the application
 function initializeApp() {
@@ -15,9 +13,7 @@ function initializeApp() {
 function hideAllScreens() {
     const screens = [
         'initialScreen',
-        'roleContainer',
-        'subRoleContainer',
-        'loginCorporate',
+        'corporateLogin',
         'customerScreen',
         'signupFormContainer',
         'loginFormContainer',
@@ -33,20 +29,25 @@ function hideAllScreens() {
         'itDashboard',
         'supplierDashboard'
     ];
-
+    
     screens.forEach(screen => {
-        document.getElementById(screen).style.display = "none";
+        const element = document.getElementById(screen);
+        if (element) {
+            element.style.display = "none";
+        }
     });
 }
 
+// Show appropriate dashboard based on role and sub-role
 function showDashboard(role, subRole) {
-    hideAllScreens(); // Hide all screens before showing the dashboard
+    hideAllScreens();
+    hideAllDashboards();
+
     switch (role) {
-        
         case "General Manager":
             showGMDashboard();
             break;
-            case "Managing Director":
+        case "Managing Director":
             showMDDashboard();
             break;
         case "Warehouse":
@@ -71,16 +72,28 @@ function showDashboard(role, subRole) {
         default:
             alert("Role not implemented");
     }
-} 
+}
+
+// Hide all dashboards
 function hideAllDashboards() {
     const dashboards = [
-        'mdDashboard', 'gmDashboard', 'warehouseManagerDashboard',
-        'warehouseAssistantDashboard', 'warehouseDriverDashboard',
-        'financeManagerDashboard', 'hrManagerDashboard', 'hrClerkDashboard', 'accountantDashboard',
-        'itDashboard', 'supplierDashboard'
+        'mdDashboard',
+        'gmDashboard',
+        'warehouseManagerDashboard',
+        'warehouseAssistantDashboard',
+        'warehouseDriverDashboard',
+        'financeManagerDashboard',
+        'hrManagerDashboard',
+        'hrClerkDashboard',
+        'accountantDashboard',
+        'itDashboard',
+        'supplierDashboard'
     ];
     dashboards.forEach(dashboard => {
-        document.getElementById(dashboard).style.display = 'none';
+        const element = document.getElementById(dashboard);
+        if (element) {
+            element.style.display = 'none';
+        }
     });
 }
 
@@ -97,14 +110,74 @@ function goBack() {
     if (screenHistory.length > 1) {
         screenHistory.pop();
         const previousScreen = screenHistory[screenHistory.length - 1];
-        document.getElementById(currentScreen).style.display = "none";
+        hideAllScreens();
         document.getElementById(previousScreen).style.display = "block";
         currentScreen = previousScreen;
+    }
+}
 
-        if (previousScreen === "roleContainer") {
-            selectedRole = "";
-            selectedSubRole = "";
-        }
+// Individual dashboard show functions
+function showGMDashboard() {
+    document.getElementById('gmDashboard').style.display = 'block';
+    updateLastLogin('gmLastLogin');
+}
+
+function showMDDashboard() {
+    document.getElementById('mdDashboard').style.display = 'block';
+    updateLastLogin('mdLastLogin');
+}
+
+function showWarehouseManagerDashboard() {
+    document.getElementById('warehouseManagerDashboard').style.display = 'block';
+    updateLastLogin('wmLastLogin');
+}
+
+function showWarehouseAssistantDashboard() {
+    document.getElementById('warehouseAssistantDashboard').style.display = 'block';
+    updateLastLogin('waLastLogin');
+}
+
+function showWarehouseDriverDashboard() {
+    document.getElementById('warehouseDriverDashboard').style.display = 'block';
+    updateLastLogin('wdLastLogin');
+}
+
+function showFinanceManagerDashboard() {
+    document.getElementById('financeManagerDashboard').style.display = 'block';
+    updateLastLogin('fmLastLogin');
+}
+
+function showHRManagerDashboard() {
+    document.getElementById('hrManagerDashboard').style.display = 'block';
+    updateLastLogin('hrmLastLogin');
+}
+
+function showHRClerkDashboard() {
+    document.getElementById('hrClerkDashboard').style.display = 'block';
+    updateLastLogin('hrcLastLogin');
+}
+
+function showAccountantDashboard() {
+    document.getElementById('accountantDashboard').style.display = 'block';
+    updateLastLogin('faLastLogin');
+}
+
+function showITDashboard() {
+    document.getElementById('itDashboard').style.display = 'block';
+    updateLastLogin('itmLastLogin');
+}
+
+function showSupplierDashboard() {
+    document.getElementById('supplierDashboard').style.display = 'block';
+    updateLastLogin('supLastLogin');
+}
+
+// Helper function to update last login time
+function updateLastLogin(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const now = new Date();
+        element.textContent = now.toLocaleString();
     }
 }
 
