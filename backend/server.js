@@ -456,6 +456,84 @@ app.put('/api/staff/:id', (req, res) => {
     });
 });
 
+// Add Corporate Login Endpoint
+app.post('/api/corporate/login', (req, res) => {
+    const { username, password, role, subRole } = req.body;
+    console.log('Received login request:', { username, password, role, subRole });
+
+    const sql = 'SELECT * FROM co_login WHERE username = ? AND role = ? AND (subrole = ? OR subrole IS NULL)';
+    db.query(sql, [username, role, subRole || null], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).send({ message: 'Database error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).send({ message: 'User not found' });
+        }
+
+        const user = results[0];
+        console.log('Stored password:', user.password);
+
+        // Compare plaintext passwords
+        if (password !== user.password) {
+            return res.status(400).send({ message: 'Invalid password' });
+        }
+
+        // Generate a JWT token
+        const token = jwt.sign(
+            { userId: user.user_id, username: user.username, role: user.role, subRole: user.subrole },
+            'your_secret_key', // Replace with a strong secret key
+            { expiresIn: '1h' }
+        );
+
+        // Send the token and user details in the response
+        res.send({
+            token,
+            user: {
+                userId: user.user_id,
+                username: user.username,
+                role: user.role,
+                subRole: user.subrole
+            }
+        });
+    });
+});
+
+app.post('/api/corporate/register', (req, res) => {
+    const { username, password, role, subrole } = req.body;
+
+    const sql = 'INSERT INTO co_login (user_id, username, password, role, subrole, role_type) VALUES (?, ?, ?, ?, ?, ?)';
+    db.query(sql, [generateUserId(), username, password, role, subrole, role.toUpperCase()], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).send({ message: 'Database error' });
+        }
+        if (password !== user.password) {
+            return res.status(400).send({ message: 'Invalid password' });
+        }
+
+        res.status(201).send({ message: 'User registered successfully' });
+    });
+});
+
+// Add Token Verification Endpoint
+app.post('/api/corporate/verify-token', (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ valid: false, message: 'No token provided' });
+    }
+
+    jwt.verify(token, 'your_secret_key', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ valid: false, message: 'Invalid token' });
+        }
+
+        res.json({ valid: true, user: decoded });
+    });
+});
+
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {

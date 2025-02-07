@@ -23,44 +23,46 @@
         </div>
 
         <!-- Unified Corporate Login Form -->
-        <div id="corporateLogin" style="display: none;">
-            <h3>Corporate Login</h3>
-            <form id="unifiedLoginForm" onsubmit="handleCorporateLogin(event)">
-                <div class="form-group">
-                    <label for="roleSelect">Role:</label>
-                    <select id="roleSelect" onchange="updateSubRoles()" required>
-                        <option value="">Select Role</option>
-                        <option value="Managing Director">Managing Director</option>
-                        <option value="General Manager">General Manager</option>
-                        <option value="Warehouse">Warehouse</option>
-                        <option value="HR">HR</option>
-                        <option value="Finance">Finance</option>
-                        <option value="IT">IT</option>
-                        <option value="Supplier">Supplier</option>
-                    </select>
-                </div>
-
-                <div id="subRoleGroup" class="form-group" style="display: none;">
-                    <label for="subRoleSelect">Sub Role:</label>
-                    <select id="subRoleSelect">
-                        <option value="">Select Sub Role</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
-                </div>
-
-                <button type="submit">Login</button>
-                <button type="button" class="back-button" onclick="goBack()">Back</button>
-            </form>
+<div id="corporateLogin" style="display: none;">
+    <h3>Corporate Login</h3>
+    <form id="unifiedLoginForm" onsubmit="handleCorporateLogin(event)">
+        <div class="form-group">
+            <label for="roleSelect">Role:</label>
+            <select id="roleSelect" onchange="updateSubRoles()" required>
+                <option value="">Select Role</option>
+                <option value="Managing Director">Managing Director</option>
+                <option value="General Manager">General Manager</option>
+                <option value="Warehouse">Warehouse</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="IT">IT</option>
+                <option value="Supplier">Supplier</option>
+            </select>
         </div>
+
+        <div id="subRoleGroup" class="form-group" style="display: none;">
+            <label for="subRoleSelect">Sub Role:</label>
+            <select id="subRoleSelect">
+                <option value="">Select Sub Role</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+        </div>
+
+        <button type="submit">Login</button>
+        <button type="button" class="back-button" onclick="goBack()">Back</button>
+    </form>
+</div>
+
+
 
         <!-- Customer Signup/Login Form -->
         <div id="customerScreen" style="display: none;">

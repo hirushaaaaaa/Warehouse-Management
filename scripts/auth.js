@@ -72,22 +72,148 @@ function validateCredentials(username, password, role, subRole) {
     return roleConfig.validUsernames.includes(username);
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('loginForm').addEventListener('submit', handleCorporateLogin);
+});
+
 // Handle corporate login form submission
 function handleCorporateLogin(event) {
     event.preventDefault();
-    
-    const role = document.getElementById('roleSelect').value;
-    const subRole = document.getElementById('subRoleSelect').value;
-    const username = document.getElementById('username').value.toLowerCase();
-    const password = document.getElementById('password').value;
 
-    if (validateCredentials(username, password, role, subRole)) {
-        hideAllScreens();
-        showDashboard(role, subRole);
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('roleSelect').value;
+    const subRole = document.getElementById('subRoleSelect').value || null;
+
+    fetch('http://localhost:5002/api/corporate/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role, subRole })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.token) {
+            // Store the token and user details in localStorage
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            // Hide the login form
+            document.getElementById('corporateLogin').style.display = 'none';
+
+            // Show the relevant dashboard based on the user's role
+            showDashboard(data.user.role, data.user.subRole);
+        } else {
+            alert(data.message || 'Login failed');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        alert('Login failed');
+    });
+}
+
+function goBack() {
+    const corporateLogin = document.getElementById('corporateLogin');
+    corporateLogin.style.display = 'none'; // Hide the corporate login form
+    // Show the previous screen (e.g., initial screen)
+    document.getElementById('initialScreen').style.display = 'block';
+}
+
+function updateSubRoles() {
+    const roleSelect = document.getElementById('roleSelect');
+    const subRoleGroup = document.getElementById('subRoleGroup');
+    const subRoleSelect = document.getElementById('subRoleSelect');
+    const selectedRole = roleSelect.value;
+
+    // Clear existing options
+    subRoleSelect.innerHTML = '<option value="">Select Sub Role</option>';
+
+    // Define sub-roles for each role
+    const subRoles = {
+        'Warehouse': ['Manager', 'Assistant', 'Driver'],
+        'HR': ['Manager', 'Clerk'],
+        'Finance': ['Manager', 'Accountant']
+    };
+
+    // Add sub-roles if they exist for the selected role
+    if (subRoles[selectedRole]) {
+        subRoles[selectedRole].forEach(subRole => {
+            const option = document.createElement('option');
+            option.value = subRole;
+            option.textContent = subRole;
+            subRoleSelect.appendChild(option);
+        });
+        subRoleGroup.style.display = 'block';
+        subRoleSelect.required = true;
     } else {
-        alert("Invalid credentials for selected role");
+        subRoleGroup.style.display = 'none';
+        subRoleSelect.required = false;
     }
 }
+
+// Add function to check if user is already logged in
+function checkCorporateLoginStatus() {
+    const token = localStorage.getItem('corporateToken');
+    const user = JSON.parse(localStorage.getItem('corporateUser'));
+    
+    if (token && user) {
+        // Verify token with backend
+        fetch('http://localhost:5002/api/corporate/verify-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                showDashboard(user.role, user.subRole);
+            } else {
+                // If token is invalid, clear storage and show login
+                localStorage.removeItem('corporateToken');
+                localStorage.removeItem('corporateUser');
+                showCorporateLogin();
+            }
+        })
+        .catch(error => {
+            console.error('Token verification error:', error);
+            showCorporateLogin();
+        });
+    }
+}
+
+function logout() {
+    // Clear stored credentials
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    // Hide all dashboards
+    hideAllDashboards();
+
+    // Show the initial screen
+    document.getElementById('initialScreen').style.display = 'block';
+}
+
+// Initialize event listeners when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up the corporate login form handler
+    const unifiedLoginForm = document.getElementById('unifiedLoginForm');
+    if (unifiedLoginForm) {
+        unifiedLoginForm.addEventListener('submit', handleCorporateLogin);
+    }
+
+    // Set up role select change handler
+    const roleSelect = document.getElementById('roleSelect');
+    if (roleSelect) {
+        roleSelect.addEventListener('change', updateSubRoles);
+    }
+
+    // Check login status on page load
+    checkCorporateLoginStatus();
+});
+
+
 
 // Handle Customer Signup Form Submission
 document.getElementById('signupForm').addEventListener('submit', function (e) {
