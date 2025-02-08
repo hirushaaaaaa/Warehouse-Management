@@ -932,6 +932,82 @@ app.get('/api/scanner-services', (req, res) => {
     });
 });
 
+//supplier update price
+app.put('/api/update-price', (req, res) => {
+    const { sp_id, new_price } = req.body;
+    
+    if (!sp_id || !new_price) {
+        return res.status(400).json({
+            success: false,
+            message: 'Product ID and new price are required'
+        });
+    }
+
+    const sql = 'UPDATE sup_stock SET sp_unitprice = ? WHERE sp_id = ?';
+    
+    db.query(sql, [new_price, sp_id], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error updating price'
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Price updated successfully'
+        });
+    });
+});
+
+//Supplier update stock
+app.put('/api/update-stock', (req, res) => {
+    const { sp_id, additional_stock, current_stock } = req.body;
+    
+    if (!sp_id || !additional_stock) {
+        return res.status(400).json({
+            success: false,
+            message: 'Product ID and additional stock quantity are required'
+        });
+    }
+
+    // Calculate new quantity
+    const new_quantity = current_stock + additional_stock;
+
+    const sql = 'UPDATE sup_stock SET s_quantity = ? WHERE sp_id = ?';
+    
+    db.query(sql, [new_quantity, sp_id], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error updating stock'
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Stock updated successfully',
+            new_quantity: new_quantity
+        });
+    });
+});
+
 
 
 // Start the server
