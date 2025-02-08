@@ -581,6 +581,358 @@ app.put('/api/it/change-password', (req, res) => {
     });
 });
 
+// GM view sup_stock
+app.get('/api/gm/supplier-stock', (req, res) => {
+    const sql = 'SELECT sp_id, s_product_name, s_quantity, sp_unitprice FROM sup_stock ORDER BY sp_id';
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching stock data'
+            });
+        }
+        
+        res.json({
+            success: true,
+            stock: results
+        });
+    });
+});
+
+//GM place Order
+// Function to generate order ID
+function generateOrderId() {
+    return 'GMO' + Math.random().toString(36).substr(2, 7).toUpperCase();
+}
+
+// Get products for dropdown
+app.get('/api/gm/products', (req, res) => {
+    const sql = 'SELECT sp_id, s_product_name, s_quantity, sp_unitprice FROM sup_stock ORDER BY sp_id';
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching products'
+            });
+        }
+        
+        res.json({
+            success: true,
+            products: results
+        });
+    });
+});
+
+// Place order endpoint
+app.post('/api/gm/place-order', (req, res) => {
+    const { sp_id, req_quantity } = req.body;
+    
+    // First check if product exists and has enough quantity
+    const checkSql = 'SELECT s_quantity FROM sup_stock WHERE sp_id = ?';
+    db.query(checkSql, [sp_id], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error checking product availability'
+            });
+        }
+        
+        if (results.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+        
+        const availableQuantity = results[0].s_quantity;
+        if (req_quantity > availableQuantity) {
+            return res.status(400).json({
+                success: false,
+                message: `Insufficient stock. Available: ${availableQuantity}`
+            });
+        }
+        
+        // Generate order ID and insert order
+        const gmo_id = generateOrderId();
+        const insertSql = 'INSERT INTO gm_order (gmo_id, sp_id, req_quantity, gmo_status) VALUES (?, ?, ?, "Pending")';
+        
+        db.query(insertSql, [gmo_id, sp_id, req_quantity], (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error placing order'
+                });
+            }
+            
+            res.json({
+                success: true,
+                message: 'Order placed successfully',
+                orderId: gmo_id
+            });
+        });
+    });
+});
+
+// Get pending orders for supplier
+app.get('/api/supplier/pending-orders', (req, res) => {
+    const sql = `
+        SELECT 
+            o.gmo_id,
+            o.sp_id,
+            s.s_product_name,
+            o.req_quantity,
+            o.gmo_status
+        FROM gm_order o
+        JOIN sup_stock s ON o.sp_id = s.sp_id
+        WHERE o.gmo_status = 'Pending'
+        ORDER BY o.gmo_id`;
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching pending orders'
+            });
+        }
+        
+        res.json({
+            success: true,
+            orders: results
+        });
+    });
+});
+
+// Update order status (Accept/Reject)
+app.put('/api/supplier/update-order/:orderId', (req, res) => {
+    const { orderId } = req.params;
+    const { status } = req.body;
+    
+    if (!['Accepted', 'Rejected'].includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid status. Must be Accepted or Rejected'
+        });
+    }
+    
+    if (status === 'Accepted') {
+        db.beginTransaction(err => {
+            if (err) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error starting transaction'
+                });
+            }
+            
+            const getOrderSql = 'SELECT sp_id, req_quantity FROM gm_order WHERE gmo_id = ?';
+            db.query(getOrderSql, [orderId], (err, orders) => {
+                if (err || orders.length === 0) {
+                    return db.rollback(() => {
+                        res.status(404).json({
+                            success: false,
+                            message: 'Order not found'
+                        });
+                    });
+                }
+                
+                const order = orders[0];
+                const updateStockSql = 'UPDATE sup_stock SET s_quantity = s_quantity - ? WHERE sp_id = ?';
+                
+                db.query(updateStockSql, [order.req_quantity, order.sp_id], (err) => {
+                    if (err) {
+                        return db.rollback(() => {
+                            res.status(500).json({
+                                success: false,
+                                message: 'Error updating stock quantity'
+                            });
+                        });
+                    }
+                    
+                    const updateOrderSql = 'UPDATE gm_order SET gmo_status = ? WHERE gmo_id = ?';
+                    db.query(updateOrderSql, [status, orderId], (err) => {
+                        if (err) {
+                            return db.rollback(() => {
+                                res.status(500).json({
+                                    success: false,
+                                    message: 'Error updating order status'
+                                });
+                            });
+                        }
+                        
+                        db.commit(err => {
+                            if (err) {
+                                return db.rollback(() => {
+                                    res.status(500).json({
+                                        success: false,
+                                        message: 'Error committing transaction'
+                                    });
+                                });
+                            }
+                            
+                            res.json({
+                                success: true,
+                                message: 'Order accepted and stock updated successfully'
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    } else {
+        const sql = 'UPDATE gm_order SET gmo_status = ? WHERE gmo_id = ?';
+        db.query(sql, [status, orderId], (err) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error updating order status'
+                });
+            }
+            
+            res.json({
+                success: true,
+                message: 'Order rejected successfully'
+            });
+        });
+    }
+});
+
+// Get all orders for GM dashboard
+app.get('/api/gm/all-orders', (req, res) => {
+    const sql = `
+        SELECT 
+            o.gmo_id,
+            o.sp_id,
+            s.s_product_name,
+            o.req_quantity,
+            o.gmo_status
+        FROM gm_order o
+        JOIN sup_stock s ON o.sp_id = s.sp_id
+        ORDER BY o.gmo_id DESC`;
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching orders'
+            });
+        }
+        
+        res.json({
+            success: true,
+            orders: results
+        });
+    });
+});
+
+// Get all barcode scanners
+app.get('/api/scanners', (req, res) => {
+    console.log('Fetching scanners...');
+    const sql = 'SELECT * FROM barcode_scanner ORDER BY bs_id';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching scanners'
+            });
+        }
+        
+        console.log('Scanners found:', results); // Add this to see the results
+        res.json({
+            success: true,
+            scanners: results
+        });
+    });
+});
+
+// Create new scanner service record
+app.post('/api/scanner-service', (req, res) => {
+    const { bs_id } = req.body;
+    
+    if (!bs_id) {
+        return res.status(400).json({
+            success: false,
+            message: 'Scanner ID is required'
+        });
+    }
+    
+    // First check if scanner exists
+    db.query('SELECT * FROM barcode_scanner WHERE bs_id = ?', [bs_id], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error checking scanner existence'
+            });
+        }
+        
+        if (results.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Scanner not found'
+            });
+        }
+        
+        // Insert service record
+        const sql = 'INSERT INTO scanner_service (bs_id) VALUES (?)';
+        db.query(sql, [bs_id], (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error creating service record'
+                });
+            }
+            
+            res.json({
+                success: true,
+                message: 'Service record created successfully',
+                serviceId: result.insertId
+            });
+        });
+    });
+});
+
+
+
+
+// Get all service records with formatted date
+app.get('/api/scanner-services', (req, res) => {
+    const sql = `
+        SELECT 
+            ss.s_service_id,
+            ss.bs_id,
+            bs.section,
+            DATE_FORMAT(ss.date, '%Y-%m-%d %H:%i:%s') as date
+        FROM scanner_service ss
+        JOIN barcode_scanner bs ON ss.bs_id = bs.bs_id
+        ORDER BY ss.date DESC`;
+        
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching service records'
+            });
+        }
+        
+        res.json({
+            success: true,
+            services: results
+        });
+    });
+});
+
+
 
 // Start the server
 const PORT = 5002;

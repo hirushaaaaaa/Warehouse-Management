@@ -16,13 +16,42 @@ function checkReports() {
 }
 
 function manageOrderApprovals() {
-    showModal("Order Approvals", `
-        <h3>Pending Approvals</h3>
-        <div class="no-data-message">
-            <p>No pending orders found. Database integration pending.</p>
-        </div>
-    `);
+    fetch('http://localhost:5002/api/gm/all-orders')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+            
+            if (data.orders.length === 0) {
+                showModal("Order Approvals", `
+                    <h3>Order Status</h3>
+                    <p>No orders found.</p>
+                `);
+                return;
+            }
+
+            const ordersHtml = data.orders.map(order => `
+                <div class="order-item">
+                    <p><strong>Order ID:</strong> ${order.gmo_id}</p>
+                    <p><strong>Product ID:</strong> ${order.sp_id}</p>
+                    <p><strong>Product Name:</strong> ${order.s_product_name}</p>
+                    <p><strong>Requested Quantity:</strong> ${order.req_quantity}</p>
+                    <p><strong>Status:</strong> <span class="status-${order.gmo_status.toLowerCase()}">${order.gmo_status}</span></p>
+                </div>
+            `).join('');
+
+            showModal("Order Approvals", `
+                <h3>Order Status</h3>
+                ${ordersHtml}
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal("Error", "Failed to fetch orders. Please try again later.");
+        });
 }
+
 function giveFeedbackReport() {
     showModal("Give Feedback", `
         <h3>Feedback Form</h3>
@@ -49,21 +78,135 @@ function reviewReport() {
     `);
 }
 
+// In gm.js - Updated placeOrder function
 function placeOrder() {
     showModal("Place Order", `
         <h3>New Order</h3>
-        <form id="orderForm">
-            <select id="supplier" required>
-                <option value="">Select Supplier</option>
-            </select>
-            <p class="note">No suppliers found. Database integration pending.</p>
-            <input type="text" placeholder="Item Description" required>
-            <input type="number" placeholder="Quantity" required>
-            <input type="number" placeholder="Unit Price" required>
+        <form id="orderForm" class="order-form">
+            <div class="form-group">
+                <label for="productId">Product ID:</label>
+                <select id="productId" required>
+                    <option value="">Select Product</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="productInfo">Product Information:</label>
+                <div id="productInfo" class="product-info">
+                    Select a product to see details
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Requested Quantity:</label>
+                <input type="number" id="quantity" min="1" required>
+                <div id="quantityError" class="error-message" style="display: none;"></div>
+            </div>
             <button type="submit">Submit Order</button>
-            <p class="note">Note: Orders will not be saved until database integration.</p>
         </form>
     `);
+
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .order-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .product-info {
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Fetch product list for dropdown
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:5002/api/gm/products', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const productSelect = document.getElementById('productId');
+            data.products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.sp_id;
+                option.textContent = `${product.sp_id} - ${product.s_product_name}`;
+                productSelect.appendChild(option);
+            });
+
+            // Add change event to show product details
+            productSelect.addEventListener('change', function() {
+                const selectedProduct = data.products.find(p => p.sp_id === this.value);
+                const productInfo = document.getElementById('productInfo');
+                
+                if (selectedProduct) {
+                    productInfo.innerHTML = `
+                        <strong>Product Name:</strong> ${selectedProduct.s_product_name}<br>
+                        <strong>Available Quantity:</strong> ${selectedProduct.s_quantity}<br>
+                        <strong>Unit Price:</strong> LKR ${selectedProduct.sp_unitprice.toLocaleString()}
+                    `;
+                } else {
+                    productInfo.innerHTML = 'Select a product to see details';
+                }
+            });
+        }
+    });
+
+    // Handle form submission
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const productId = document.getElementById('productId').value;
+        const quantity = document.getElementById('quantity').value;
+        const quantityError = document.getElementById('quantityError');
+        
+        if (!productId || !quantity) {
+            quantityError.textContent = 'Please fill all fields';
+            quantityError.style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5002/api/gm/place-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    sp_id: productId,
+                    req_quantity: parseInt(quantity)
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Order placed successfully!');
+                closeModal();
+            } else {
+                quantityError.textContent = data.message;
+                quantityError.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            quantityError.textContent = 'Error connecting to server';
+            quantityError.style.display = 'block';
+        }
+    });
 }
 
 function manageStaff() {
@@ -352,14 +495,97 @@ function saveSupplier(event) {
 }
 
 
-function reEnterCredentials() {
-    showModal("Re-enter Credentials", `
-        <h3>Verify Identity</h3>
-        <form id="reAuthForm">
-            <input type="password" placeholder="Enter your password" required>
-            <button type="submit">Verify</button>
-        </form>
+function supplierStock() {
+    showModal("Supplier Stock Information", `
+        <h3>Current Stock Levels</h3>
+        <div class="stock-table-container">
+            <table class="stock-table">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Available Quantity</th>
+                        <th>Unit Price (Rs.)</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr>
+                        <td colspan="4">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     `);
+
+    // Add some basic styling to the modal
+    const style = document.createElement('style');
+    style.textContent = `
+        .stock-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .stock-table th, .stock-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .stock-table th {
+            background-color: #f4f4f4;
+            position: sticky;
+            top: 0;
+        }
+        .stock-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .stock-table tr:hover {
+            background-color: #f5f5f5;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Fetch stock data
+    const token = localStorage.getItem('token');
+    fetch('http://localhost:5002/api/gm/supplier-stock', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tableBody = document.getElementById('stockTableBody');
+            tableBody.innerHTML = data.stock.map(item => `
+                <tr>
+                    <td>${item.sp_id}</td>
+                    <td>${item.s_product_name}</td>
+                    <td>${item.s_quantity}</td>
+                    <td>${item.sp_unitprice.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: 'LKR'
+                    })}</td>
+                </tr>
+            `).join('');
+        } else {
+            document.getElementById('stockTableBody').innerHTML = `
+                <tr>
+                    <td colspan="4">Error loading stock data</td>
+                </tr>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('stockTableBody').innerHTML = `
+            <tr>
+                <td colspan="4">Error connecting to server</td>
+            </tr>
+        `;
+    });
 }
 
 function logout() {

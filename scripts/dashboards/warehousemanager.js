@@ -6,12 +6,63 @@ function showWarehouseManagerDashboard() {
 
 // Warehouse Manager Functions
 function checkScannerMaintenance() {
-    showModal("Scanner Maintenance", `
-        <h3>Scanner Maintenance Status</h3>
-        <div class="no-data-message">
-            <p>No maintenance records found. Database integration pending.</p>
-        </div>
-    `);
+    fetch('http://localhost:5002/api/scanner-services')
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+
+        const records = data.services;
+        let content = `
+            <h3>Barcode Scanner Maintenance</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Service ID</th>
+                            <th>Scanner ID</th>
+                            <th>Section</th>
+                            <th>Service Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        if (records && records.length > 0) {
+            records.forEach(record => {
+                content += `
+                    <tr>
+                        <td>${record.s_service_id}</td>
+                        <td>${record.bs_id}</td>
+                        <td>${record.section}</td>
+                        <td>${new Date(record.date).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            content += `
+                <tr>
+                    <td colspan="4" class="text-center">No service records found.</td>
+                </tr>
+            `;
+        }
+
+        content += `
+                </tbody>
+            </table>
+        </div>`;
+
+        showModal("Scanner Status", content);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showModal("Scanner Status", `
+            <div class="alert alert-danger">
+                Error loading service records: ${error.message}
+            </div>
+        `);
+    });
 }
 
 function checkDamagedStock() {
