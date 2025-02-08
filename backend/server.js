@@ -480,9 +480,15 @@ app.post('/api/corporate/login', (req, res) => {
             return res.status(400).send({ message: 'Invalid password' });
         }
 
-        // Generate a JWT token
-        const token = jwt.sign(
-            { userId: user.user_id, username: user.username, role: user.role, subRole: user.subrole },
+          // Generate a JWT token
+          const token = jwt.sign(
+            { 
+                userId: user.user_id, 
+                username: user.username, 
+                role: user.role, // "IT"
+                subRole: user.subrole, // null
+                role_type: user.role_type // "ITM"
+            },
             'your_secret_key', // Replace with a strong secret key
             { expiresIn: '1h' }
         );
@@ -494,7 +500,8 @@ app.post('/api/corporate/login', (req, res) => {
                 userId: user.user_id,
                 username: user.username,
                 role: user.role,
-                subRole: user.subrole
+                subRole: user.subrole,
+                role_type: user.role_type
             }
         });
     });
@@ -533,6 +540,47 @@ app.post('/api/corporate/verify-token', (req, res) => {
         res.json({ valid: true, user: decoded });
     });
 });
+
+
+app.get('/api/it/get-users', (req, res) => {
+    db.query("SELECT user_id, username FROM co_login", (err, results) => {
+        if (err) {
+            console.error("Error fetching users:", err);
+            return res.status(500).json({ success: false, message: "Database error" });
+        }
+        res.json(results);
+    });
+});
+
+
+
+
+
+
+// Password update endpoints
+app.put('/api/it/change-password', (req, res) => {
+    const { user_id, newPassword } = req.body;
+
+    if (!user_id || !newPassword) {
+        return res.status(400).json({ success: false, message: "User ID and new password are required" });
+    }
+
+    const updateQuery = "UPDATE co_login SET password = ? WHERE user_id = ?";
+
+    db.query(updateQuery, [newPassword, user_id], (err, result) => {
+        if (err) {
+            console.error("Error updating password:", err);
+            return res.status(500).json({ success: false, message: "Database error" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: "User ID not found" });
+        }
+
+        res.json({ success: true, message: "Password updated successfully" });
+    });
+});
+
 
 // Start the server
 const PORT = 5002;

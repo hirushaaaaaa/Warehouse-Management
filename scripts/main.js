@@ -9,6 +9,7 @@ function initializeApp() {
     document.getElementById(currentScreen).style.display = "block";
 }
 
+
 // Hide all screens including login forms
 function hideAllScreens() {
     const screens = [
