@@ -4,46 +4,47 @@ function showHRClerkDashboard() {
     document.getElementById('hrcLastLogin').textContent = new Date().toLocaleString();
 }
 
-function handleLeaveRequest() {
-    showModal("Leave Request Handler", `
-        <h3>Process Leave Requests</h3>
-        <div class="modal-content">
-            <form id="leaveRequestForm" onsubmit="submitLeaveRequest(event)">
-                <div class="form-group">
-                    <select id="employeeSelect" name="employee_id" required>
-                        <option value="">Select Employee</option>
-                        <option value="emp1">Employee 1</option>
-                        <option value="emp2">Employee 2</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="leaveType" name="leave_type" required>
-                        <option value="">Select Leave Type</option>
-                        <option value="annual">Annual Leave</option>
-                        <option value="sick">Sick Leave</option>
-                        <option value="personal">Personal Leave</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input type="date" name="start_date" required>
-                </div>
-                <div class="form-group">
-                    <input type="date" name="end_date" required>
-                </div>
-                <div class="form-group">
-                    <textarea name="comments" placeholder="Comments" required></textarea>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="submit-btn">Submit Leave Request</button>
-                </div>
-            </form>
-        </div>
-    `);
+function leaveRequestFeedback() {
+    fetch('http://localhost:5002/api/staffleaves')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error fetching leave requests: ' + data.message);
+                return;
+            }
+
+            const leaveRequests = data.leaves.map(leave => {
+                return `
+                    <div class="leave-request">
+                        <p><strong>Leave ID:</strong> ${leave.leave_id}</p>
+                        <p><strong>Employee ID:</strong> ${leave.employee_id}</p>
+                        <p><strong>Leave Type:</strong> ${leave.leave_type}</p>
+                        <p><strong>Start Date:</strong> ${leave.start_date}</p>
+                        <p><strong>End Date:</strong> ${leave.end_date}</p>
+                        <p><strong>Comments:</strong> ${leave.comments || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${leave.status}</p>
+                        <p><strong>Created At:</strong> ${leave.created_at}</p>
+                        <p><strong>Updated At:</strong> ${leave.updated_at}</p>
+                        <hr>
+                    </div>
+                `;
+            }).join('');
+
+            console.log(leaveRequests); // Debug: Check the generated HTML
+            showModal("Leave Request Feedback", `
+                <h2>Leave Requests</h2>
+                ${leaveRequests}
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching leave requests. Please try again.');
+        });
 }
 
 async function submitLeaveRequest(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const formData = {
         employee_id: form.employee_id.value,
@@ -54,7 +55,7 @@ async function submitLeaveRequest(event) {
     };
 
     try {
-        const response = await fetch('http://localhost:5002/api/leaves', {
+        const response = await fetch('http://localhost:5002/api/staffleaves', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -74,6 +75,54 @@ async function submitLeaveRequest(event) {
         console.error('Error:', error);
         alert('Error submitting leave request. Please try again.');
     }
+}
+
+function leaveRequestFeedback() {
+    // Fetch leave requests from the backend
+    fetch('http://localhost:5002/api/staffleaves')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error fetching leave requests: ' + data.message);
+                return;
+            }
+
+            // Generate HTML to display the leave requests
+            const leaveRequests = data.leaves.map(leave => {
+                // Determine the class for the container based on the status
+                let containerClass = '';
+                if (leave.status === 'Rejected') {
+                    containerClass = 'leave-rejected';
+                } else if (leave.status === 'Approved') {
+                    containerClass = 'leave-approved';
+                }
+
+                return `
+                    <div class="leave-request ${containerClass}">
+                        <p><strong>Leave ID:</strong> ${leave.leave_id}</p>
+                        <p><strong>Employee ID:</strong> ${leave.employee_id}</p>
+                        <p><strong>Leave Type:</strong> ${leave.leave_type}</p>
+                        <p><strong>Start Date:</strong> ${leave.start_date}</p>
+                        <p><strong>End Date:</strong> ${leave.end_date}</p>
+                        <p><strong>Comments:</strong> ${leave.comments || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${leave.status}</p>
+                        <p><strong>Created At:</strong> ${leave.created_at}</p>
+                        <p><strong>Updated At:</strong> ${leave.updated_at}</p>
+                        <hr>
+                    </div>
+                `;
+            }).join('');
+
+            // Show the modal with the leave requests
+            showModal("Leave Request Feedback", `
+                <h2>Leave Requests</h2>
+                ${leaveRequests}
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching leave requests. Please try again.');
+        });
 }
 
 function manageMeetings() {

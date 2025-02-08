@@ -1008,7 +1008,43 @@ app.put('/api/update-stock', (req, res) => {
     });
 });
 
+// Endpoint to fetch staff IDs
+app.get('/api/costaff', (req, res) => {
+    const sql = 'SELECT staff_id FROM Staff';
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching staff IDs'
+            });
+        }
 
+        res.status(200).json({
+            success: true,
+            staff: result
+        });
+    });
+});
+
+//Display leaves in hrclerk
+app.get('/api/staffleaves', (req, res) => {
+    const sql = 'SELECT * FROM leaves ORDER BY created_at DESC'; // Order by created_at in descending order
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching leave requests'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            leaves: result
+        });
+    });
+});
 
 // Start the server
 const PORT = 5002;

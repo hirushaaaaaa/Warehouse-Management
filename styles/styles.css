@@ -147,3 +147,20 @@ textarea {
         width: calc(100% - 24px);
     }
 }
+
+/* Base styles for all leave requests */
+.leave-request {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.leave-request hr {
+    border: 0;
+    height: 1px;
+    background: #ddd;
+    margin: 10px 0;
+}
+
