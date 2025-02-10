@@ -24,7 +24,7 @@ function checkForNewOrders() {
             const ordersHtml = data.orders.map(order => `
                 <div class="order-item">
                     <p><strong>Order ID:</strong> ${order.gmo_id}</p>
-                    <p><strong>Product ID:</strong> ${order.sp_id}</p>
+                    <p><strong>SP ID:</strong> ${order.sp_id}</p>
                     <p><strong>Product Name:</strong> ${order.s_product_name}</p>
                     <p><strong>Requested Quantity:</strong> ${order.req_quantity}</p>
                     <div class="order-actions">
@@ -68,12 +68,75 @@ function updateOrderStatus(orderId, status) {
 }
 
 function prepareOrders() {
-    showModal("Prepare Orders", `
-        <h3>Order Preparation</h3>
-        <div class="no-data-message">
-            <p>No orders to prepare. Database integration pending.</p>
-        </div>
-    `);
+    fetch('http://localhost:5002/api/gm/all-orders')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            // Filter orders with status "Accepted"
+            const acceptedOrders = data.orders.filter(order => order.gmo_status === "Accepted");
+
+            if (acceptedOrders.length === 0) {
+                showModal("Prepare Orders", `
+                    <h3>Order Preparation</h3>
+                    <p>No orders with status "Accepted" found.</p>
+                `);
+                return;
+            }
+
+            // Create dropdown options for accepted orders
+            const dropdownOptions = acceptedOrders.map(order => `
+                <option value="${order.gmo_id}">
+                    Order ID: ${order.gmo_id} | SP Id: ${order.sp_id} |Product: ${order.s_product_name} | Quantity: ${order.req_quantity}
+                </option>
+            `).join('');
+
+            // Show modal with dropdown and "Send Order" button
+            showModal("Prepare Orders", `
+                <h3>Order Preparation</h3>
+                <label for="orderDropdown">Select Order:</label>
+                <select id="orderDropdown">
+                    ${dropdownOptions}
+                </select>
+                <button onclick="sendOrder()" class="send-order-btn">Send Order</button>
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal("Error", "Failed to fetch orders. Please try again later.");
+        });
+}
+
+// Function to handle "Send Order" button click
+function sendOrder() {
+    const orderDropdown = document.getElementById('orderDropdown');
+    const selectedOrderId = orderDropdown.value;
+
+    if (!selectedOrderId) {
+        alert("Please select an order.");
+        return;
+    }
+
+    fetch(`http://localhost:5002/api/supplier/send-order/${selectedOrderId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+            alert("Order sent successfully!");
+            prepareOrders(); // Refresh the orders list
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Failed to send order. Please try again later.");
+        });
 }
 
 function updatePrices() {

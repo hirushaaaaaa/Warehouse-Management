@@ -95,3 +95,4 @@ async function showStaffManagementModal() {
 
     showModal("Staff Management", modalContent);
 }
+

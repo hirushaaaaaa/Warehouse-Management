@@ -65,6 +65,46 @@ function checkScannerMaintenance() {
     });
 }
 
+function viewUpcomingDeliveries() {   
+    fetch('http://localhost:5002/api/driver/upcoming-deliveries')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            if (data.deliveries.length === 0) {
+                showModal("Upcoming Deliveries", `
+                    <h3>Delivery Schedule</h3>
+                    <div class="no-data-message">
+                        <p>No upcoming deliveries found.</p>
+                    </div>
+                `);
+                return;
+            }
+
+            // Create HTML for each delivery
+            const deliveriesHtml = data.deliveries.map(delivery => `
+                <div class="delivery-item">
+                    <p><strong>Delivery ID:</strong> ${delivery.up_id}</p>
+                    <p><strong>Order ID:</strong> ${delivery.gmo_id}</p>
+                    <p><strong>Product Name:</strong> ${delivery.up_product_name}</p>
+                    <p><strong>Quantity:</strong> ${delivery.up_quantity}</p>
+                </div>
+            `).join('');
+
+            // Show modal with the list of upcoming deliveries
+            showModal("Upcoming Deliveries", `
+                <h3>Delivery Schedule</h3>
+                ${deliveriesHtml}
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal("Error", "Failed to fetch upcoming deliveries. Please try again later.");
+        });
+}
+
 function checkDamagedStock() {
     showModal("Damaged Stock Report", `
         <h3>Damaged Stock Overview</h3>

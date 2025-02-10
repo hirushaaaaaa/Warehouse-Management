@@ -22,35 +22,88 @@ function manageOrderApprovals() {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            
-            if (data.orders.length === 0) {
-                showModal("Order Approvals", `
-                    <h3>Order Status</h3>
-                    <p>No orders found.</p>
-                `);
+
+            if (!data.orders || data.orders.length === 0) {
+                showModal("Order Approvals", "No orders found.");
                 return;
             }
 
-            const ordersHtml = data.orders.map(order => `
-                <div class="order-item">
-                    <p><strong>Order ID:</strong> ${order.gmo_id}</p>
-                    <p><strong>Product ID:</strong> ${order.sp_id}</p>
-                    <p><strong>Product Name:</strong> ${order.s_product_name}</p>
-                    <p><strong>Requested Quantity:</strong> ${order.req_quantity}</p>
-                    <p><strong>Status:</strong> <span class="status-${order.gmo_status.toLowerCase()}">${order.gmo_status}</span></p>
-                </div>
-            `).join('');
+            // Group orders by status
+            const groupedOrders = {
+                Pending: [],
+                Accepted: [],
+                Rejected: [],
+                Sent: []
+            };
 
-            showModal("Order Approvals", `
-                <h3>Order Status</h3>
-                ${ordersHtml}
-            `);
+            data.orders.forEach(order => {
+                if (groupedOrders.hasOwnProperty(order.gmo_status)) {
+                    groupedOrders[order.gmo_status].push(order);
+                }
+            });
+
+            // Generate HTML for each status group
+            const ordersHtml = Object.keys(groupedOrders).map(status => {
+                if (groupedOrders[status].length === 0) return ''; // Skip empty groups
+                
+                const ordersList = groupedOrders[status].map(order => `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <h3>Order #${order.gmo_id}</h3>
+                            <span class="status-${order.gmo_status.toLowerCase()}">
+                                ${order.gmo_status}
+                            </span>
+                        </div>
+                        
+                        <div class="order-details">
+                            <div class="detail-group">
+                                <p><strong>Product ID:</strong> ${order.sp_id}</p>
+                                <p><strong>Product Name:</strong> ${order.s_product_name}</p>
+                                <p><strong>Requested Quantity:</strong> ${order.req_quantity}</p>
+                                <p><strong>Created:</strong> ${order.created_date}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                return `
+                    <h2 class="status-heading">${status} Orders</h2>
+                    <div class="orders-group">${ordersList}</div>
+                `;
+            }).join('');
+
+            showModal("Order Approvals", ordersHtml);
         })
         .catch(error => {
             console.error('Error:', error);
             showModal("Error", "Failed to fetch orders. Please try again later.");
         });
 }
+
+
+
+function updateOrderStatus(gmoId, newStatus) {
+    fetch(`http://localhost:5002/api/gm/update-order-status/${gmoId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message);
+        }
+        showModal("Success", `Order #${gmoId} status updated to ${newStatus}`);
+        manageOrderApprovals(); // Refresh the orders list
+    })
+    .catch(error => {
+        console.error('Error updating order:', error);
+        showModal("Error", "Failed to update order status. Please try again later.");
+    });
+}
+
 
 function giveFeedbackReport() {
     showModal("Give Feedback", `

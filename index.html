@@ -233,6 +233,10 @@
                 <p>Last Login: <span id="waLastLogin"></span></p>
             </div>
             <div class="dashboard-grid">
+                <button onclick="confirmDelivery()" class="dashboard-btn">
+                    <span class="icon">🔍</span>
+                    Confirm Delivery
+                </button>
                 <button onclick="recordNewStock()" class="dashboard-btn">
                     <span class="icon">📝</span>
                     Record New Stock
@@ -241,10 +245,7 @@
                     <span class="icon">📤</span>
                     Send Off Stock
                 </button>
-                <button onclick="checkForDamageStock()" class="dashboard-btn">
-                    <span class="icon">🔍</span>
-                    Check Damaged Stock
-                </button>
+              
                 <button onclick="checkForBarcodeLessCargo()" class="dashboard-btn">
                     <span class="icon">❌</span>
                     Check Barcodeless Cargo
