@@ -1,4 +1,3 @@
-// Add this to the top of your customer.js file
 document.addEventListener("DOMContentLoaded", function() {
     // Initial stock data fetch
     fetchStockData();
