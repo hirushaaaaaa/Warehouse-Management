@@ -1808,26 +1808,43 @@ app.post('/api/warehouse/add-stock-arrival', (req, res) => {
         db.query(insertGoodStockQuery, [bsId, spId, gmoId, goodQuantity], (err, result) => {
             if (err) {
                 console.error("Error inserting into good_stock_arrival:", err);
-                return res.status(500).json({ success: false });
+                return res.status(500).json({ success: false, message: "Error inserting into good_stock_arrival" });
             }
 
-            // Insert into damaged_stock_arrival
-            const insertDamagedStockQuery = `
-                INSERT INTO damaged_stock_arrival (bs_id, sp_id, gmo_id, dsa_quantity)
-                VALUES (?, ?, ?, ?);
+            // Update p_quantity in stocks table by adding gsa_quantity to it
+            const updateStockQuantityQuery = `
+                UPDATE stocks
+                SET p_quantity = p_quantity + ?
+                WHERE sp_id = ?
             `;
 
-            db.query(insertDamagedStockQuery, [bsId, spId, gmoId, damagedQuantity], (err, result) => {
+            db.query(updateStockQuantityQuery, [goodQuantity, spId], (err, result) => {
                 if (err) {
-                    console.error("Error inserting into damaged_stock_arrival:", err);
-                    return res.status(500).json({ success: false });
+                    console.error("Error updating stock quantity:", err);
+                    return res.status(500).json({ success: false, message: "Error updating stock quantity" });
                 }
 
-                res.json({ success: true });
+                console.log("Stock quantity updated successfully");
+
+                // Insert into damaged_stock_arrival
+                const insertDamagedStockQuery = `
+                    INSERT INTO damaged_stock_arrival (bs_id, sp_id, gmo_id, dsa_quantity)
+                    VALUES (?, ?, ?, ?);
+                `;
+
+                db.query(insertDamagedStockQuery, [bsId, spId, gmoId, damagedQuantity], (err, result) => {
+                    if (err) {
+                        console.error("Error inserting into damaged_stock_arrival:", err);
+                        return res.status(500).json({ success: false, message: "Error inserting into damaged_stock_arrival" });
+                    }
+
+                    res.json({ success: true, message: "Stock and Damaged records updated successfully" });
+                });
             });
         });
     });
 });
+
 
 // GET endpoint to fetch all damaged stock for wm
 app.get('/api/damaged-stock', (req, res) => {

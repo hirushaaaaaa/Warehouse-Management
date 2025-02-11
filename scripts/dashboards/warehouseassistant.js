@@ -288,23 +288,42 @@ function addStockArrival(req, res) {
                 return res.status(500).json({ success: false, message: "Error inserting good stock" });
             }
 
-            // Step 3: Insert into damaged_stock_arrival
-            const insertDamagedStockQuery = `
-                INSERT INTO damaged_stock_arrival (bs_id, sp_id, gmo_id, dsa_quantity) 
-                VALUES (?, ?, ?, ?)
+            console.log("Inserted good stock successfully");
+
+            // Step 3: Update p_quantity in stocks table
+            const updateStockQuery = `
+                UPDATE stocks 
+                SET p_quantity = p_quantity + ? 
+                WHERE sp_id = ?
             `;
 
-            db.query(insertDamagedStockQuery, [bsId, spId, gmoId, damagedQuantity], function (err) {
+            db.query(updateStockQuery, [goodQuantity, spId], function (err) {
                 if (err) {
-                    console.error("Error inserting into damaged_stock_arrival:", err);
-                    return res.status(500).json({ success: false, message: "Error inserting damaged stock" });
+                    console.error("Error updating stocks:", err);
+                    return res.status(500).json({ success: false, message: "Error updating stock quantity" });
                 }
 
-                res.json({ success: true, message: "Stock and Damaged records updated successfully" });
+                console.log("Stock quantity updated successfully");
+
+                // Step 4: Insert into damaged_stock_arrival
+                const insertDamagedStockQuery = `
+                    INSERT INTO damaged_stock_arrival (bs_id, sp_id, gmo_id, dsa_quantity) 
+                    VALUES (?, ?, ?, ?)
+                `;
+
+                db.query(insertDamagedStockQuery, [bsId, spId, gmoId, damagedQuantity], function (err) {
+                    if (err) {
+                        console.error("Error inserting into damaged_stock_arrival:", err);
+                        return res.status(500).json({ success: false, message: "Error inserting damaged stock" });
+                    }
+
+                    res.json({ success: true, message: "Stock and Damaged records updated successfully" });
+                });
             });
         });
     });
 }
+
 
 
 
