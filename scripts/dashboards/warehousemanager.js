@@ -106,13 +106,56 @@ function viewUpcomingDeliveries() {
 }
 
 function checkDamagedStock() {
-    showModal("Damaged Stock Report", `
+    const loadingContent = `
         <h3>Damaged Stock Overview</h3>
-        <div class="no-data-message">
-            <p>No damaged stock records found. Database integration pending.</p>
-        </div>
-    `);
+        <div class="loading">Loading damaged stock data...</div>
+    `;
+    showModal("Damaged Stock Report", loadingContent);
+
+    fetch('http://localhost:5002/api/damaged-stock')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error("Failed to fetch damaged stock data.");
+            }
+
+            const damagedStock = data.damagedStock; // Extracting the array
+
+            const tableContent = `
+                <h3>Damaged Stock Overview</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Damaged Stock ID</th>
+                                <th>Barcode Scanner ID</th>
+                                <th>Supplier Stock ID</th>
+                                <th>Quantity</th>
+                                <th>GM Order ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${damagedStock.length ? damagedStock.map(item => `
+                                <tr>
+                                    <td>${item.dsa_id}</td>
+                                    <td>${item.bs_id}</td>
+                                    <td>${item.sp_id}</td>
+                                    <td>${item.dsa_quantity}</td>
+                                    <td>${item.gmo_id || 'N/A'}</td>
+                                </tr>
+                            `).join('') : '<tr><td colspan="5">No damaged stock records found</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            showModal("Damaged Stock Report", tableContent);
+        })
+        .catch(error => {
+            console.error('Error fetching damaged stock:', error);
+            showModal("Error", "Failed to fetch damaged stock data. Please try again later.");
+        });
 }
+
 
 function checkLowStockAlerts() {
     showModal("Low Stock Alerts", `

@@ -1829,6 +1829,35 @@ app.post('/api/warehouse/add-stock-arrival', (req, res) => {
     });
 });
 
+// GET endpoint to fetch all damaged stock for wm
+app.get('/api/damaged-stock', (req, res) => {
+    const query = `
+        SELECT 
+            dsa_id,
+            bs_id,
+            sp_id,
+            dsa_quantity,
+            gmo_id
+        FROM damaged_stock_arrival
+        ORDER BY dsa_id DESC
+    `;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: "Error fetching damaged stock",
+                error: err.message
+            });
+        }
+
+        res.json({
+            success: true,
+            damagedStock: result
+        });
+    });
+});
 
 
 
