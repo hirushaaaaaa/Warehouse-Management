@@ -37,39 +37,6 @@ app.get('/', (_req, res) => {
     res.json({ message: 'Server is running!' });
 });
 
-// Customer Signup Endpoint
-app.post('/api/customer/signup', async (req, res) => {
-    const { name, email, password } = req.body;
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert the customer into the database
-    const sql = 'INSERT INTO customers (name, email, password) VALUES (?, ?, ?)';
-    db.query(sql, [name, email, hashedPassword], (err, _result) => {
-        if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(400).send('Email already exists');
-            }
-            throw err;
-        }
-        res.send('Customer registered successfully');
-    });
-});
-
-// Customer Login Endpoint
-app.post('/api/customer/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    console.log('Login request received:', { email, password }); // Debugging
-
-    // Fetch customer from the database
-    const sql = 'SELECT * FROM customers WHERE email = ?';
-    db.query(sql, [email], async (err, results) => {
-        if (err) {
-            console.error('Database error:', err); // Debugging
-            return res.status(500).send({ message: 'Database error' });
-        }
 
         if (results.length === 0) {
             console.log('Customer not found'); // Debugging
