@@ -45,7 +45,7 @@ function checkForUpcomingDeliveries() {
         });
 }
 
-// Function to check for new arrivals
+
 // Function to check for new arrivals
 function checkForNewArrivals() {
     fetch('http://localhost:5002/api/driver/upcoming-stock')

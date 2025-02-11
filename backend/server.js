@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
@@ -17,6 +18,11 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Serve static files from multiple directories
+app.use(express.static(path.join(__dirname, '..'))); // Serve from the root folder
+app.use('/scripts', express.static(path.join(__dirname, '../scripts'))); // Serve from the scripts folder
+app.use('/styles', express.static(path.join(__dirname, '../styles'))); // Serve from the styles folder
 
 // Create a MySQL connection
 const db = mysql.createConnection({
@@ -32,45 +38,102 @@ db.connect((err) => {
     console.log('MySQL connected...');
 });
 
-// Test route
-app.get('/', (_req, res) => {
-    res.json({ message: 'Server is running!' });
+// Routes for pages
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/customer-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'customer-dashboard.html'));
+});
 
-        if (results.length === 0) {
-            console.log('Customer not found'); // Debugging
-            return res.status(400).send({ message: 'Customer not found' });
-        }
+// Customer Signup Endpoint
+app.post('/api/customer/signup', async (req, res) => {
+    const { name, email, password } = req.body;
 
-        const customer = results[0];
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Compare passwords
-        const validPassword = await bcrypt.compare(password, customer.password);
-        if (!validPassword) {
-            console.log('Invalid password'); // Debugging
-            return res.status(400).send({ message: 'Invalid password' });
-        }
-
-        // Generate a JWT token
-        const token = jwt.sign(
-            { id: customer.id, email: customer.email },
-            'your_secret_key', // Replace with a strong secret key
-            { expiresIn: '1h' }
-        );
-
-        // Send the token and customer details in the response
-        console.log('Login successful'); // Debugging
-        res.send({
-            token,
-            customer: {
-                id: customer.id,
-                name: customer.name,
-                email: customer.email
+    // Insert the customer into the database
+    const sql = 'INSERT INTO customers (name, email, password) VALUES (?, ?, ?)';
+    db.query(sql, [name, email, hashedPassword], (err, _result) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).send('Email already exists');
             }
-        });
+            throw err;
+        }
+        res.send('Customer registered successfully');
     });
 });
+
+// Customer Login Endpoint
+app.post('/api/customer/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    // Input validation
+    if (!email || !password) {
+        console.log('Missing credentials:', { email: !!email, password: !!password });
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
+    console.log('Login attempt for email:', email);
+    
+    try {
+        // Fetch customer from the database
+        const sql = 'SELECT * FROM customers WHERE email = ?';
+        db.query(sql, [email], async (err, results) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ message: 'Database error', error: err.message });
+            }
+            
+            console.log('Database query results:', results.length > 0 ? 'Customer found' : 'No customer found');
+            
+            if (results.length === 0) {
+                return res.status(400).json({ message: 'Customer not found' });
+            }
+            
+            const customer = results[0];
+            
+            try {
+                // Compare passwords
+                const validPassword = await bcrypt.compare(password, customer.password);
+                console.log('Password validation:', validPassword ? 'success' : 'failed');
+                
+                if (!validPassword) {
+                    return res.status(400).json({ message: 'Invalid password' });
+                }
+                
+                // Generate JWT token
+                const token = jwt.sign(
+                    { id: customer.id, email: customer.email },
+                    'your_secret_key',
+                    { expiresIn: '1h' }
+                );
+                
+                console.log('Login successful, token generated');
+                
+                // Send response
+                res.json({
+                    token,
+                    customer: {
+                        id: customer.id,
+                        name: customer.name,
+                        email: customer.email
+                    }
+                });
+            } catch (bcryptError) {
+                console.error('Bcrypt error:', bcryptError);
+                res.status(500).json({ message: 'Error validating password' });
+            }
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 // HR Letter Approval Endpoint
 app.post('/api/hr/letter', (req, res) => {
     console.log('Received letter request:', req.body);
@@ -1843,8 +1906,138 @@ app.get('/api/damaged-stock', (req, res) => {
     });
 });
 
+// API Routes
+app.get('/api/stocks', (req, res) => {
+    console.log('Fetching stocks...');
+    const sql = 'SELECT * FROM stocks';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error fetching stock data:', err);
+            return res.status(500).json({ message: 'Failed to fetch stock data' });
+        }
+        console.log('Stock data fetched:', results);
+        res.status(200).json(results);
+    });
+});
 
+// Handle Purchase Endpoint
+app.post('/api/purchase', (req, res) => {
+    const { productId, quantity } = req.body;
 
+    // Step 1: Check if the product exists and has sufficient quantity
+    const checkStockSql = 'SELECT p_quantity FROM stocks WHERE p_id = ?';
+    db.query(checkStockSql, [productId], (err, results) => {
+        if (err) {
+            console.error('Error fetching product:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const availableQuantity = results[0].p_quantity;
+
+        if (quantity > availableQuantity) {
+            return res.status(400).json({ success: false, message: 'Quantity exceeds available stock' });
+        }
+
+        // Step 2: Update the stock quantity
+        const updateStockSql = 'UPDATE stocks SET p_quantity = p_quantity - ? WHERE p_id = ?';
+        db.query(updateStockSql, [quantity, productId], (err) => {
+            if (err) {
+                console.error('Error updating stock:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+
+            res.status(200).json({ success: true, message: 'Purchase successful' });
+        });
+    });
+});
+
+app.get('/api/stockss', (req, res) => {
+    const sql = 'SELECT * FROM stocks WHERE p_quantity > 0';
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+        res.json(results);
+    });
+});
+
+app.post('/api/orders', async (req, res) => {
+    const { user_id, p_id, co_quantity } = req.body;
+
+    if (!user_id || !p_id || !co_quantity) {
+        return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Fetch stock details
+    const stockQuery = 'SELECT p_quantity, p_unitprice FROM stocks WHERE p_id = ?';
+    db.query(stockQuery, [p_id], (err, stockResults) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+
+        if (stockResults.length === 0) {
+            return res.status(400).json({ message: 'Product not found' });
+        }
+
+        const stock = stockResults[0];
+
+        if (co_quantity > stock.p_quantity) {
+            return res.status(400).json({ message: `Only ${stock.p_quantity} items available` });
+        }
+
+        const co_price = stock.p_unitprice;
+        const total = co_quantity * co_price;
+
+        // Insert order
+        const orderQuery = `
+            INSERT INTO cus_order (user_id, p_id, co_quantity, co_price, total) 
+            VALUES (?, ?, ?, ?, ?)`;
+
+        db.query(orderQuery, [user_id, p_id, co_quantity, co_price, total], (err, orderResults) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ message: 'Error placing order' });
+            }
+
+            // Update stock quantity
+            const updateStockQuery = 'UPDATE stocks SET p_quantity = p_quantity - ? WHERE p_id = ?';
+            db.query(updateStockQuery, [co_quantity, p_id], (err) => {
+                if (err) {
+                    console.error('Stock update error:', err);
+                    return res.status(500).json({ message: 'Error updating stock' });
+                }
+
+                res.json({ message: 'Order placed successfully', orderId: orderResults.insertId });
+            });
+        });
+    });
+});
+
+app.get('/api/orders/:user_id', (req, res) => {
+    const user_id = req.params.user_id;
+
+    const sql = `
+        SELECT co.co_id, co.p_id, s.p_name, co.co_quantity, co.co_price, co.total, co.created_at 
+        FROM cus_order co
+        JOIN stocks s ON co.p_id = s.p_id
+        WHERE co.user_id = ? 
+        ORDER BY co.created_at DESC`;
+
+    db.query(sql, [user_id], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+        res.json(results);
+    });
+});
 
 
 

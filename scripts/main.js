@@ -88,7 +88,8 @@ function hideAllDashboards() {
         'hrClerkDashboard',
         'accountantDashboard',
         'itDashboard',
-        'supplierDashboard'
+        'supplierDashboard',
+        'customerScreen'
     ];
     dashboards.forEach(dashboard => {
         const element = document.getElementById(dashboard);
@@ -171,6 +172,11 @@ function showITDashboard() {
 function showSupplierDashboard() {
     document.getElementById('supplierDashboard').style.display = 'block';
     updateLastLogin('supLastLogin');
+}
+
+function showCustomerDashboard() {
+    document.getElementById('customerScreen').style.display = 'block';
+    updateLastLogin('customerLastLogin');
 }
 
 // Helper function to update last login time

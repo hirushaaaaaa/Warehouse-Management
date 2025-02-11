@@ -236,45 +236,39 @@ document.getElementById('signupForm').addEventListener('submit', function (e) {
 });
 
 // Handle Customer Login Form Submission
-document.getElementById('loginForm').addEventListener('submit', function (e) {
+document.getElementById('customerLoginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    
+    if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+    }
 
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
-    console.log('Sending login request...'); // Debugging
-
-    fetch('http://localhost:5002/api/customer/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-    })
-        .then(response => {
-            console.log('Response received:', response); // Debugging
-            if (!response.ok) {
-                // Handle HTTP errors (e.g., 400, 500)
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Login failed');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Data received:', data); // Debugging
-            if (data.token) {
-                // Store the token and customer details in localStorage
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('customer', JSON.stringify(data.customer));
-
-                alert('Login successful');
-                // Redirect to customer dashboard or home page
-                window.location.href = '/customer-dashboard.html';
-            } else {
-                alert(data.message || 'Login failed');
-            }
-        })
-        .catch(error => {
-            console.error('Error logging in:', error); // Debugging
-            alert(error.message || 'Login failed');
+    try {
+        const response = await fetch('http://localhost:5002/api/customer/login', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
         });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'Login failed');
+        }
+        
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('customer', JSON.stringify(data.customer));
+            window.location.href = '/customer-dashboard.html';
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Login failed. Please try again.');
+    }
 });

@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Dashboard</title>
-    <link rel="stylesheet" href="styles/styles.css"> <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="/styles/customerdash.css"> <!-- Updated path -->
 </head>
 <body>
     <header class="dashboard-header">
         <h1>Welcome to Your Dashboard</h1>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+        <div>
+            
+            <button class="header-btn" onclick="placeOrder()">Place Order</button>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
     </header>
     <main class="dashboard-main">
         <section class="dashboard-section">
@@ -20,28 +24,41 @@
             </div>
         </section>
         <section class="dashboard-section">
-            <h2>Recent Activity</h2>
-            <div class="activity-list">
-                <p>No recent activity.</p>
-            </div>
+            <h2>Shop</h2>
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody"></tbody>
+            </table>
         </section>
     </main>
-    <script src="js/auth.js"></script>
+    
+    <!-- Script Files -->
+    <script src="/scripts/auth.js"></script>
+    <script src="/scripts/main.js"></script>
+    <script src="/scripts/modal.js"></script>
+    <script src="/scripts/navigation.js"></script>
+    <script src="/scripts/dashboards/customer.js"></script> <!-- Updated path -->
+
     <script>
-        // Check if the user is logged in
-        const token = localStorage.getItem('token');
-        const customer = JSON.parse(localStorage.getItem('customer'));
+        document.addEventListener("DOMContentLoaded", function() {
+            const token = localStorage.getItem('token');
+            const customer = JSON.parse(localStorage.getItem('customer'));
 
-        if (!token || !customer) {
-            // Redirect to the login page if not logged in
-            window.location.href = '/index.html';
-        } else {
-            // Display customer details
-            document.getElementById('customerName').textContent = customer.name;
-            document.getElementById('customerEmail').textContent = customer.email;
-        }
+            if (!token || !customer) {
+                window.location.href = '/index.html'; // Redirect to login page
+            } else {
+                document.getElementById('customerName').textContent = customer.name;
+                document.getElementById('customerEmail').textContent = customer.email;
+            }
+        });
 
-        // Logout function
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('customer');
