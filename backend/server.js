@@ -662,7 +662,7 @@ app.post('/api/gm/place-order', (req, res) => {
     const { sp_id, req_quantity } = req.body;
     
     // First check if product exists and has enough quantity
-    const checkSql = 'SELECT s_quantity FROM sup_stock WHERE sp_id = ?';
+    const checkSql = 'SELECT s_quantity, sp_unitprice FROM sup_stock WHERE sp_id = ?';
     db.query(checkSql, [sp_id], (err, results) => {
         if (err) {
             console.error('Database error:', err);
@@ -680,6 +680,9 @@ app.post('/api/gm/place-order', (req, res) => {
         }
         
         const availableQuantity = results[0].s_quantity;
+        const unitPrice = results[0].sp_unitprice;
+        
+        // Check if requested quantity is available
         if (req_quantity > availableQuantity) {
             return res.status(400).json({
                 success: false,
@@ -687,11 +690,14 @@ app.post('/api/gm/place-order', (req, res) => {
             });
         }
         
-        // Generate order ID and insert order
+        // Calculate the total price
+        const gmo_total = req_quantity * unitPrice;
+
+        // Generate order ID and insert order with total price
         const gmo_id = generateOrderId();
-        const insertSql = 'INSERT INTO gm_order (gmo_id, sp_id, req_quantity, gmo_status) VALUES (?, ?, ?, "Pending")';
+        const insertSql = 'INSERT INTO gm_order (gmo_id, sp_id, req_quantity, gmo_total, gmo_status) VALUES (?, ?, ?, ?, "Pending")';
         
-        db.query(insertSql, [gmo_id, sp_id, req_quantity], (err, result) => {
+        db.query(insertSql, [gmo_id, sp_id, req_quantity, gmo_total], (err, result) => {
             if (err) {
                 console.error('Database error:', err);
                 return res.status(500).json({
@@ -1967,6 +1973,7 @@ app.get('/api/stockss', (req, res) => {
     });
 });
 
+//submit customer order
 app.post('/api/orders', async (req, res) => {
     const { user_id, p_id, co_quantity } = req.body;
 

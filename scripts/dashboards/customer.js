@@ -72,7 +72,7 @@ function displayStockData(stockData) {
             <td>${product.p_id}</td>
             <td>${product.p_name}</td>
             <td>${product.p_quantity}</td>
-            <td>$${product.p_unitprice.toFixed(2)}</td>
+            <td>Rs.${product.p_unitprice.toFixed(2)}</td>
         `;
         stockTableBody.appendChild(row);
     });
@@ -218,8 +218,8 @@ function placeOrder() {
                         <label for="orderQuantity">Quantity:</label>
                         <input type="number" id="orderQuantity" min="1" value="1">
                         <br><br>
-                        <p><strong>Price per unit:</strong> $<span id="unitPrice">0.00</span></p>
-                        <p><strong>Total:</strong> $<span id="orderTotal">0.00</span></p>
+                        <p><strong>Price per unit:</strong> Rs.<span id="unitPrice">0.00</span></p>
+                        <p><strong>Total:</strong> Rs.<span id="orderTotal">0.00</span></p>
                         <br>
                         <button onclick="submitOrder()">Submit Order</button>
                     </div>

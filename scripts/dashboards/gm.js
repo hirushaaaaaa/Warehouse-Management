@@ -153,6 +153,12 @@ function placeOrder() {
                 <input type="number" id="quantity" min="1" required>
                 <div id="quantityError" class="error-message" style="display: none;"></div>
             </div>
+            <div class="form-group">
+                <label for="totalPrice">Total Price:</label>
+                <div id="totalPrice" class="total-price">
+                    Rs. 0.00
+                </div>
+            </div>
             <button type="submit">Submit Order</button>
         </form>
     `);
@@ -179,8 +185,14 @@ function placeOrder() {
             color: red;
             font-size: 0.9em;
         }
+        .total-price {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
     `;
     document.head.appendChild(style);
+
+    let selectedProduct = null;
 
     // Fetch product list for dropdown
     const token = localStorage.getItem('token');
@@ -202,8 +214,9 @@ function placeOrder() {
 
             // Add change event to show product details
             productSelect.addEventListener('change', function() {
-                const selectedProduct = data.products.find(p => p.sp_id === this.value);
+                selectedProduct = data.products.find(p => p.sp_id === this.value);
                 const productInfo = document.getElementById('productInfo');
+                const totalPrice = document.getElementById('totalPrice');
                 
                 if (selectedProduct) {
                     productInfo.innerHTML = `
@@ -211,8 +224,12 @@ function placeOrder() {
                         <strong>Available Quantity:</strong> ${selectedProduct.s_quantity}<br>
                         <strong>Unit Price:</strong> LKR ${selectedProduct.sp_unitprice.toLocaleString()}
                     `;
+                    
+                    // Show initial total as Rs. 0.00
+                    totalPrice.textContent = `Rs. 0.00`;
                 } else {
                     productInfo.innerHTML = 'Select a product to see details';
+                    totalPrice.textContent = `Rs. 0.00`; // Keep total at 0 when no product selected
                 }
             });
         }
@@ -260,7 +277,27 @@ function placeOrder() {
             quantityError.style.display = 'block';
         }
     });
+
+    // Update total price dynamically based on quantity
+    const quantityInput = document.getElementById('quantity');
+    const totalPriceElement = document.getElementById('totalPrice');
+    
+    quantityInput.addEventListener('input', function() {
+        if (selectedProduct) {
+            const quantity = parseInt(quantityInput.value);
+            if (quantity && quantity >= 1) {
+                const total = selectedProduct.sp_unitprice * quantity;
+                totalPriceElement.textContent = `Rs. ${total.toFixed(2)}`;
+            } else {
+                totalPriceElement.textContent = `Rs. 0.00`;  // If no quantity is selected, set total to 0
+            }
+        } else {
+            totalPriceElement.textContent = `Rs. 0.00`;  // If no product is selected, keep total at 0
+        }
+    });
 }
+
+
 
 function manageStaff() {
     // Show loading state
