@@ -723,7 +723,8 @@ app.get('/api/supplier/pending-orders', (req, res) => {
             o.sp_id,
             s.s_product_name,
             o.req_quantity,
-            o.gmo_status
+            o.gmo_status,
+            o.gmo_total
         FROM gm_order o
         JOIN sup_stock s ON o.sp_id = s.sp_id
         WHERE o.gmo_status = 'Pending'
@@ -837,6 +838,67 @@ app.put('/api/supplier/update-order/:orderId', (req, res) => {
             });
         });
     }
+});
+
+// get accepted order details to fm
+app.get('/api/supplier/accepted-orders', (req, res) => {
+    const sql = `
+        SELECT 
+            o.gmo_id,
+            o.sp_id,
+            s.s_product_name,
+            o.req_quantity,
+            o.gmo_status,
+            o.gmo_total
+        FROM gm_order o
+        JOIN sup_stock s ON o.sp_id = s.sp_id
+        WHERE o.gmo_status = 'Accepted' 
+        AND o.gmo_id NOT IN (SELECT gmo_id FROM gmo_accounts)
+        ORDER BY o.gmo_id`;
+    
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching accepted orders'
+            });
+        }
+        
+        res.json({
+            success: true,
+            orders: results
+        });
+    });
+});
+
+// add to gm accounts
+app.post('/api/supplier/add-to-accounts', (req, res) => {
+    const { gmo_id, gmo_total } = req.body;
+    
+    // Generate a unique gm_acc_id (you might want to modify this based on your needs)
+    const gm_acc_id = 'ACC' + Date.now();
+    
+    const sql = `
+        INSERT INTO gmo_accounts (gm_acc_id, gmo_id, gm_total)
+        VALUES (?, ?, ?)
+    `;
+    
+    db.query(sql, [gm_acc_id, gmo_id, gmo_total], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error adding to accounts'
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Successfully added to accounts',
+            gm_acc_id
+        });
+    });
 });
 
 // Get all orders for GM dashboard
@@ -2027,22 +2089,43 @@ app.post('/api/orders', async (req, res) => {
     });
 });
 
-app.get('/api/orders/:user_id', (req, res) => {
-    const user_id = req.params.user_id;
-
-    const sql = `
-        SELECT co.co_id, co.p_id, s.p_name, co.co_quantity, co.co_price, co.total, co.created_at 
-        FROM cus_order co
-        JOIN stocks s ON co.p_id = s.p_id
-        WHERE co.user_id = ? 
-        ORDER BY co.created_at DESC`;
-
-    db.query(sql, [user_id], (err, results) => {
+// get total arrivals wm
+app.get('/api/total-arrivals', (req, res) => {
+    // Query for good stock total
+    const goodStockSql = 'SELECT COUNT(gsa_id) as total FROM good_stock_arrival';
+    
+    db.query(goodStockSql, (err, goodStockResult) => {
         if (err) {
             console.error('Database error:', err);
-            return res.status(500).json({ message: 'Database error' });
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching good stock total'
+            });
         }
-        res.json(results);
+
+        // Query for damaged stock total
+        const damagedStockSql = 'SELECT COUNT(dsa_id) as total FROM damaged_stock_arrival';
+        
+        db.query(damagedStockSql, (err, damagedStockResult) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error fetching damaged stock total'
+                });
+            }
+
+            const goodStockTotal = goodStockResult[0].total;
+            const damagedStockTotal = damagedStockResult[0].total;
+            const totalStock = goodStockTotal + damagedStockTotal;
+
+            res.json({
+                success: true,
+                goodStockTotal: goodStockTotal,
+                damagedStockTotal: damagedStockTotal,
+                totalStock: totalStock
+            });
+        });
     });
 });
 

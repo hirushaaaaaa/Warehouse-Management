@@ -182,3 +182,52 @@ function informGM() {
         </form>
     `);
 }
+
+function viewTotalArrivals() {
+    const loadingContent = `
+        <h3>Total Stock Arrivals</h3>
+        <div class="loading">Loading stock arrival data...</div>
+    `;
+    showModal("Total Arrivals", loadingContent);
+
+    fetch('http://localhost:5002/api/total-arrivals')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error("Failed to fetch total arrivals data.");
+            }
+
+            const tableContent = `
+                <h3>Total Stock Arrivals Overview</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Stock Type</th>
+                                <th>Total Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Good Stock Arrivals</td>
+                                <td>${data.goodStockTotal}</td>
+                            </tr>
+                            <tr>
+                                <td>Damaged Stock Arrivals</td>
+                                <td>${data.damagedStockTotal}</td>
+                            </tr>
+                            <tr class="table-info">
+                                <td><strong>Total Stock</strong></td>
+                                <td><strong>${data.totalStock}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            showModal("Total Arrivals", tableContent);
+        })
+        .catch(error => {
+            console.error('Error fetching total arrivals:', error);
+            showModal("Error", "Failed to fetch total arrivals data. Please try again later.");
+        });
+}
