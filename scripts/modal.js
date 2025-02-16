@@ -96,3 +96,30 @@ async function showStaffManagementModal() {
     showModal("Staff Management", modalContent);
 }
 
+function showModal(title, content) {
+    // Create or update the modal structure
+    const modal = document.createElement('div');
+    modal.id = 'dynamicModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>${title}</h2>
+            ${content}
+        </div>
+    `;
+
+    // Append the modal to the body
+    document.body.appendChild(modal);
+
+    // Display the modal
+    modal.style.display = 'block';
+}
+
+function closeModal() {
+    const modal = document.getElementById('dynamicModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.remove(); // Remove the modal from the DOM
+    }
+}

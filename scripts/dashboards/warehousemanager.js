@@ -231,3 +231,44 @@ function viewTotalArrivals() {
             showModal("Error", "Failed to fetch total arrivals data. Please try again later.");
         });
 }
+
+function viewTotalDepartures() {
+    const loadingContent = `
+        <h3>Total Departures</h3>
+        <div class="loading">Loading departure data...</div>
+    `;
+    showModal("Total Departures", loadingContent);
+
+    fetch('http://localhost:5002/api/total-co-departures')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error("Failed to fetch total departures data.");
+            }
+
+            const tableContent = `
+                <h3>Total Departures Overview</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Departure Type</th>
+                                <th>Total Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total Departures</td>
+                                <td>${data.totalDepartures}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            showModal("Total Departures", tableContent);
+        })
+        .catch(error => {
+            console.error('Error fetching total departures:', error);
+            showModal("Error", "Failed to fetch total departures data. Please try again later.");
+        });
+}

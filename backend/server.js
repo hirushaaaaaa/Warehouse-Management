@@ -2129,8 +2129,116 @@ app.get('/api/total-arrivals', (req, res) => {
     });
 });
 
+// API to fetch customer orders
+app.get('/api/customer-orders', (req, res) => {
+    const query = `
+        SELECT 
+            co_id AS 'Customer Order Id', 
+            user_id AS 'User Id', 
+            p_id AS 'Product Id', 
+            co_quantity AS 'Quantity', 
+            total AS 'Total'
+        FROM cus_order;
+    `;
 
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching customer orders:', err);
+            return res.status(500).json({ error: 'Failed to fetch customer orders' });
+        }
 
+        // Send the results back to the frontend
+        res.status(200).json(results);
+    });
+});
+
+// API to fetch pending orders
+app.get('/api/co-pending-orders', (req, res) => {
+    const query = `
+        SELECT co_id, user_id, p_id, co_quantity AS quantity, total
+        FROM cus_order
+        WHERE co_status = 'pending';
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching pending orders:', err);
+            return res.status(500).json({ error: 'Failed to fetch pending orders' });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
+// API to send stock
+app.post('/api/send-co-stock', (req, res) => {
+    const { co_id, user_id, p_id, quantity, total } = req.body;
+
+    // Step 1: Update p_quantity in stocks table
+    const updateStockQuery = `
+        UPDATE stocks
+        SET p_quantity = p_quantity - ?
+        WHERE p_id = ?;
+    `;
+
+    db.query(updateStockQuery, [quantity, p_id], (err, results) => {
+        if (err) {
+            console.error('Error updating stock quantity:', err);
+            return res.status(500).json({ error: 'Failed to update stock quantity' });
+        }
+
+        // Step 2: Insert into stocksent table
+        const insertQuery = `
+            INSERT INTO stocksent (co_id, user_id, p_id, quantity, total)
+            VALUES (?, ?, ?, ?, ?);
+        `;
+
+        db.query(insertQuery, [co_id, user_id, p_id, quantity, total], (err, results) => {
+            if (err) {
+                console.error('Error inserting into stocksent:', err);
+                return res.status(500).json({ error: 'Failed to send stock' });
+            }
+
+            // Step 3: Update co_status in cus_order table
+            const updateStatusQuery = `
+                UPDATE cus_order
+                SET co_status = 'completed'
+                WHERE co_id = ?;
+            `;
+
+            db.query(updateStatusQuery, [co_id], (err, results) => {
+                if (err) {
+                    console.error('Error updating cus_order:', err);
+                    return res.status(500).json({ error: 'Failed to update order status' });
+                }
+
+                res.status(200).json({ message: 'Stock sent successfully' });
+            });
+        });
+    });
+});
+
+//total send off stock
+app.get('/api/total-co-departures', (req, res) => {
+    const query = 'SELECT COUNT(send_stock_id) as total FROM stocksent';
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching total departures'
+            });
+        }
+
+        const totalDepartures = results[0].total;
+
+        res.json({
+            success: true,
+            totalDepartures: totalDepartures
+        });
+    });
+});
 
 // Start the server
 const PORT = 5002;

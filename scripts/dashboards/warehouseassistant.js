@@ -366,14 +366,148 @@ function resetForm() {
 
 
 function sendOffStock() {
-    showModal("Send Off Stock", `
-        <h3>Stock Dispatch</h3>
-        <form id="dispatchForm">
-            <input type="text" placeholder="Product ID" required>
-            <input type="number" placeholder="Quantity" required>
-            <input type="text" placeholder="Destination" required>
-            <button type="submit">Dispatch Stock</button>
-            <p class="note">Note: Dispatch records will not be saved until database integration.</p>
-        </form>
-    `);
+    // Fetch pending orders
+    fetch('http://localhost:5002/api/co-pending-orders')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch pending orders');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Create the modal structure
+            const modal = document.createElement('div');
+            modal.id = 'sendStockModal';
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <h2>Send Off Stock</h2>
+                    <form id="sendStockForm">
+                        <label for="coId">Select Order ID:</label>
+                        <select id="coId" required>
+                            <option value="" disabled selected>Select Order ID</option>
+                            ${data.map(order => `
+                                <option value="${order.co_id}">Order ID: ${order.co_id}</option>
+                            `).join('')}
+                        </select>
+
+                        <label for="userId">User ID:</label>
+                        <input type="text" id="userId" readonly>
+
+                        <label for="pId">Product ID:</label>
+                        <input type="text" id="pId" readonly>
+
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" id="quantity" readonly>
+
+                        <label for="total">Total:</label>
+                        <input type="number" id="total" readonly>
+
+                        <button type="submit">Send Stock</button>
+                    </form>
+                </div>
+            `;
+
+            // Append the modal to the body
+            document.body.appendChild(modal);
+
+            // Display the modal
+            modal.style.display = 'block';
+
+            // Add event listener to the dropdown
+            document.getElementById('coId').addEventListener('change', (event) => {
+                const selectedOrder = data.find(order => order.co_id == event.target.value);
+                if (selectedOrder) {
+                    document.getElementById('userId').value = selectedOrder.user_id;
+                    document.getElementById('pId').value = selectedOrder.p_id; // Populate Product ID
+                    document.getElementById('quantity').value = selectedOrder.quantity;
+                    document.getElementById('total').value = selectedOrder.total;
+                }
+            });
+
+            // Handle form submission
+            document.getElementById('sendStockForm').addEventListener('submit', (event) => {
+                event.preventDefault();
+                const coId = document.getElementById('coId').value;
+                const userId = document.getElementById('userId').value;
+                const pId = document.getElementById('pId').value; // Get Product ID
+                const quantity = document.getElementById('quantity').value;
+                const total = document.getElementById('total').value;
+
+                // Send stock data to the backend
+                fetch('http://localhost:5002/api/send-co-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ co_id: coId, user_id: userId, p_id: pId, quantity: quantity, total: total }),
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to send stock');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        alert('Stock sent successfully');
+                        closeModal();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to send stock');
+                    });
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch pending orders');
+        });
+}
+
+
+
+function customerOrders() {
+    fetch('http://localhost:5002/api/customer-orders')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch customer orders');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Generate the table rows dynamically
+            const tableRows = data.map(order => `
+                <tr>
+                    <td>${order['Customer Order Id']}</td>
+                    <td>${order['User Id']}</td>
+                    <td>${order['Product Id']}</td>
+                    <td>${order['Quantity']}</td>
+                    <td>${order['Total']}</td>
+                </tr>
+            `).join('');
+
+            // Show the modal with the customer orders table
+            showModal("Customer Orders", `
+                <h3>Customer Orders</h3>
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>Customer Order Id</th>
+                            <th>User Id</th>
+                            <th>Product Id</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch customer orders');
+        });
 }
