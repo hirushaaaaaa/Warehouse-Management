@@ -347,3 +347,49 @@ function updateStock() {
             `);
         });
 }
+
+//most purchased item report
+function generateMostPurchasedReport() {
+    const loadingContent = `
+        <h3>Generating Report...</h3>
+        <div class="loading">Loading report data...</div>
+    `;
+    showModal("Most Purchased Products Report", loadingContent);
+
+    fetch('http://localhost:5002/api/most-purchased-products')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error("Failed to fetch report data.");
+            }
+
+            const reportContent = `
+                <h3>Most Purchased Products Report</h3>
+                <div class="report-section">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Total Quantity Purchased</th>
+                                <th>Total Amount Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(product => `
+                                <tr>
+                                    <td>${product.product_name}</td>
+                                    <td>${product.total_quantity_purchased}</td>
+                                    <td>${product.total_amount_spent.toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            showModal("Most Purchased Products Report", reportContent);
+        })
+        .catch(error => {
+            console.error('Error generating report:', error);
+            showModal("Error", "Failed to generate report. Please try again later.");
+        });
+}

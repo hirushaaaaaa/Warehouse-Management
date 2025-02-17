@@ -2240,6 +2240,95 @@ app.get('/api/total-co-departures', (req, res) => {
     });
 });
 
+app.get('/api/stock/report', (req, res) => {
+    const queries = {
+        totalArrivals: `
+            SELECT 
+                (SELECT COUNT(gsa_id) FROM good_stock_arrival) AS good_stock,
+                (SELECT COUNT(dsa_id) FROM damaged_stock_arrival) AS damaged_stock,
+                (SELECT COUNT(rs_id) FROM raw_stock) AS raw_stock;
+        `,
+        totalDepartures: `
+            SELECT COUNT(send_stock_id) AS total_departures FROM stocksent;
+        `,
+        pendingOrders: `
+            SELECT COUNT(co_id) AS pending_orders FROM cus_order WHERE co_status = 'pending';
+        `,
+        completedOrders: `
+            SELECT COUNT(co_id) AS completed_orders FROM cus_order WHERE co_status = 'completed';
+        `,
+        stockLevels: `
+            SELECT p_id, p_name, p_quantity FROM stocks;
+        `
+    };
+
+    // Execute all queries
+    db.query(queries.totalArrivals, (err, totalArrivals) => {
+        if (err) return res.status(500).json({ error: 'Error fetching total arrivals' });
+
+        db.query(queries.totalDepartures, (err, totalDepartures) => {
+            if (err) return res.status(500).json({ error: 'Error fetching total departures' });
+
+            db.query(queries.pendingOrders, (err, pendingOrders) => {
+                if (err) return res.status(500).json({ error: 'Error fetching pending orders' });
+
+                db.query(queries.completedOrders, (err, completedOrders) => {
+                    if (err) return res.status(500).json({ error: 'Error fetching completed orders' });
+
+                    db.query(queries.stockLevels, (err, stockLevels) => {
+                        if (err) return res.status(500).json({ error: 'Error fetching stock levels' });
+
+                        // Send the report data
+                        res.json({
+                            success: true,
+                            totalArrivals: totalArrivals[0],
+                            totalDepartures: totalDepartures[0],
+                            pendingOrders: pendingOrders[0],
+                            completedOrders: completedOrders[0],
+                            stockLevels: stockLevels
+                        });
+                    });
+                });
+            });
+        });
+    });
+});
+
+app.get('/api/most-purchased-products', (req, res) => {
+    const query = `
+        SELECT 
+            s.s_product_name AS product_name,
+            SUM(g.req_quantity) AS total_quantity_purchased,
+            SUM(g.gmo_total) AS total_amount_spent
+        FROM 
+            gm_order g
+        JOIN 
+            sup_stock s ON g.sp_id = s.sp_id
+        WHERE 
+            g.gmo_status IN ('Accepted', 'Sent')
+        GROUP BY 
+            s.s_product_name
+        ORDER BY 
+            total_quantity_purchased DESC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching most purchased products'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: results
+        });
+    });
+});
+
+
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {
