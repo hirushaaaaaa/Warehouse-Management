@@ -158,12 +158,70 @@ function checkDamagedStock() {
 
 
 function checkLowStockAlerts() {
-    showModal("Low Stock Alerts", `
-        <h3>Low Stock Items</h3>
-        <div class="no-data-message">
-            <p>No low stock alerts found. Database integration pending.</p>
-        </div>
-    `);
+    const loadingContent = `
+        <h3>Low Stock Alerts</h3>
+        <div class="loading">Loading stock level data...</div>
+    `;
+    showModal("Low Stock Alerts", loadingContent);
+
+    fetch('http://localhost:5002/api/stock-levels')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                throw new Error("Failed to fetch stock level data.");
+            }
+
+            const stocks = data.stocks;
+            
+            // Filter stocks based on quantity thresholds
+            const lowStocks = stocks.filter(item => item.p_quantity < 100);
+            
+            const tableContent = `
+                <h3>Low Stock Alerts</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Supplier ID</th>
+                                <th>Product Name</th>
+                                <th>Current Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${lowStocks.length ? lowStocks.map(item => {
+                                let status = '';
+                                let statusClass = '';
+                                
+                                if (item.p_quantity <= 80) {
+                                    status = 'RESTOCK ASAP';
+                                    statusClass = 'text-danger fw-bold';
+                                } else if (item.p_quantity < 100) {
+                                    status = 'Restock Soon';
+                                    statusClass = 'text-warning';
+                                }
+                                
+                                return `
+                                    <tr>
+                                        <td>${item.p_id}</td>
+                                        <td>${item.sp_id}</td>
+                                        <td>${item.p_name}</td>
+                                        <td>${item.p_quantity}</td>
+                                        <td class="${statusClass}">${status}</td>
+                                    </tr>
+                                `;
+                            }).join('') : '<tr><td colspan="5">No low stock alerts at this time</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            showModal("Low Stock Alerts", tableContent);
+        })
+        .catch(error => {
+            console.error('Error fetching stock levels:', error);
+            showModal("Error", "Failed to fetch stock level data. Please try again later.");
+        });
 }
 
 function informGM() {

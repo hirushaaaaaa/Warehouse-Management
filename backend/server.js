@@ -2328,6 +2328,74 @@ app.get('/api/most-purchased-products', (req, res) => {
     });
 });
 
+app.get('/api/stock-levels', (req, res) => {
+    const query = `
+        SELECT 
+            s.p_id,
+            s.sp_id,
+            s.p_name,
+            s.p_quantity,
+            s.p_unitprice
+        FROM 
+            stocks s
+        WHERE 
+            s.p_quantity < 100
+        ORDER BY 
+            s.p_quantity ASC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching stock levels'
+            });
+        }
+
+        res.json({
+            success: true,
+            stocks: results
+        });
+    });
+});
+
+// Optional: Add an endpoint to get full stock history
+app.get('/api/stock-history', (req, res) => {
+    const query = `
+        SELECT 
+            s.p_id,
+            s.sp_id,
+            s.p_name,
+            s.p_quantity,
+            s.p_unitprice,
+            CASE 
+                WHEN s.p_quantity <= 80 THEN 'CRITICAL'
+                WHEN s.p_quantity < 100 THEN 'LOW'
+                ELSE 'NORMAL'
+            END AS stock_status
+        FROM 
+            stocks s
+        ORDER BY 
+            s.p_quantity ASC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching stock history'
+            });
+        }
+
+        res.json({
+            success: true,
+            stocks: results
+        });
+    });
+});
+
 
 // Start the server
 const PORT = 5002;

@@ -255,3 +255,21 @@ textarea {
         font-size: 16px;
     }
 }
+
+
+.alert {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+}
+
+.urgent {
+    background-color: #ffcccc; /* Light red for urgent alerts */
+    border: 1px solid #ff0000;
+}
+
+.warning {
+    background-color: #fff3cd; /* Light yellow for warning alerts */
+    border: 1px solid #ffc107;
+}
