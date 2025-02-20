@@ -1,4 +1,3 @@
-// modal.js
 function showModal(title, content) {
     const modalHtml = `
         <div class="modal">
@@ -123,3 +122,4 @@ function closeModal() {
         modal.remove(); // Remove the modal from the DOM
     }
 }
+

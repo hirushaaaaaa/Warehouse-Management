@@ -2035,12 +2035,14 @@ app.get('/api/stockss', (req, res) => {
     });
 });
 
-//submit customer order
 app.post('/api/orders', async (req, res) => {
     const { user_id, p_id, co_quantity } = req.body;
 
     if (!user_id || !p_id || !co_quantity) {
-        return res.status(400).json({ message: 'All fields are required' });
+        return res.status(400).json({ 
+            success: false, 
+            message: 'All fields are required' 
+        });
     }
 
     // Fetch stock details
@@ -2048,23 +2050,32 @@ app.post('/api/orders', async (req, res) => {
     db.query(stockQuery, [p_id], (err, stockResults) => {
         if (err) {
             console.error('Database error:', err);
-            return res.status(500).json({ message: 'Database error' });
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Database error' 
+            });
         }
 
         if (stockResults.length === 0) {
-            return res.status(400).json({ message: 'Product not found' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Product not found' 
+            });
         }
 
         const stock = stockResults[0];
 
         if (co_quantity > stock.p_quantity) {
-            return res.status(400).json({ message: `Only ${stock.p_quantity} items available` });
+            return res.status(400).json({ 
+                success: false, 
+                message: `Only ${stock.p_quantity} items available` 
+            });
         }
 
         const co_price = stock.p_unitprice;
         const total = co_quantity * co_price;
 
-        // Insert order
+        // Insert order into cus_order table
         const orderQuery = `
             INSERT INTO cus_order (user_id, p_id, co_quantity, co_price, total) 
             VALUES (?, ?, ?, ?, ?)`;
@@ -2072,18 +2083,45 @@ app.post('/api/orders', async (req, res) => {
         db.query(orderQuery, [user_id, p_id, co_quantity, co_price, total], (err, orderResults) => {
             if (err) {
                 console.error('Database error:', err);
-                return res.status(500).json({ message: 'Error placing order' });
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Error placing order' 
+                });
             }
 
-            // Update stock quantity
-            const updateStockQuery = 'UPDATE stocks SET p_quantity = p_quantity - ? WHERE p_id = ?';
-            db.query(updateStockQuery, [co_quantity, p_id], (err) => {
+            const co_id = orderResults.insertId; // Get the auto-generated co_id
+
+            // Insert into sales table
+            const salesQuery = `
+                INSERT INTO sales (co_id, p_id, total) 
+                VALUES (?, ?, ?)`;
+
+            db.query(salesQuery, [co_id, p_id, total], (err) => {
                 if (err) {
-                    console.error('Stock update error:', err);
-                    return res.status(500).json({ message: 'Error updating stock' });
+                    console.error('Sales insert error:', err);
+                    return res.status(500).json({ 
+                        success: false, 
+                        message: 'Error adding to sales' 
+                    });
                 }
 
-                res.json({ message: 'Order placed successfully', orderId: orderResults.insertId });
+                // Update stock quantity
+                const updateStockQuery = 'UPDATE stocks SET p_quantity = p_quantity - ? WHERE p_id = ?';
+                db.query(updateStockQuery, [co_quantity, p_id], (err) => {
+                    if (err) {
+                        console.error('Stock update error:', err);
+                        return res.status(500).json({ 
+                            success: false, 
+                            message: 'Error updating stock' 
+                        });
+                    }
+
+                    res.json({ 
+                        success: true, 
+                        message: 'Order placed successfully and added to sales', 
+                        orderId: co_id 
+                    });
+                });
             });
         });
     });
@@ -2396,6 +2434,180 @@ app.get('/api/stock-history', (req, res) => {
     });
 });
 
+// GET /api/payroll
+app.get('/api/payroll', (req, res) => {
+    const query = `
+        SELECT 
+            user_id,
+            username,
+            role_type,
+            amount
+        FROM 
+            payroll
+        ORDER BY 
+            user_id ASC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error fetching payroll data'
+            });
+        }
+
+        res.json({
+            success: true,
+            payroll: results
+        });
+    });
+});
+
+// PUT /api/payroll/:user_id
+app.put('/api/payroll/:user_id', (req, res) => {
+    const { user_id } = req.params;
+    const { amount } = req.body;
+
+    const query = `
+        UPDATE payroll
+        SET amount = ?
+        WHERE user_id = ?;
+    `;
+
+    db.query(query, [amount, user_id], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error updating payroll data'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Payroll data updated successfully'
+        });
+    });
+});
+
+app.post('/api/sales', (req, res) => {
+    const { co_id, p_id, total } = req.body;
+
+    const query = `
+        INSERT INTO sales (co_id, p_id, total)
+        VALUES (?, ?, ?);
+    `;
+
+    db.query(query, [co_id, p_id, total], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Error adding to sales'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Sales data added successfully'
+        });
+    });
+});
+
+// GET /api/sales
+app.get('/api/sales', (req, res) => {
+    const query = `
+        SELECT 
+            s.sale_id,
+            s.co_id,
+            s.p_id,
+            s.total,
+            c.co_quantity,
+            c.co_price,
+            c.user_id,
+            c.co_status
+        FROM 
+            sales s
+        INNER JOIN 
+            cus_order c ON s.co_id = c.co_id
+        ORDER BY 
+            s.sale_id ASC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error fetching sales data' 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            sales: results 
+        });
+    });
+});
+
+// GET /api/sales-report
+app.get('/api/sales-report', (req, res) => {
+    const query = `
+        SELECT 
+            s.sale_id,
+            s.co_id,
+            s.p_id,
+            s.total AS sale_total,
+            c.co_quantity,
+            c.co_price,
+            c.user_id,
+            c.co_status,
+            st.p_name AS product_name,
+            st.p_unitprice AS product_unit_price,
+            cu.name AS customer_name
+        FROM 
+            sales s
+        INNER JOIN 
+            cus_order c ON s.co_id = c.co_id
+        INNER JOIN 
+            stocks st ON s.p_id = st.p_id
+        INNER JOIN 
+            customers cu ON c.user_id = cu.id
+        ORDER BY 
+            s.sale_id ASC;
+    `;
+
+    console.log('Executing query:', query); // Log the query
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database error:', err); // Log the error
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Error generating sales report' 
+            });
+        }
+
+        console.log('Query results:', results); // Log the results
+
+        // Calculate totals for the report
+        const totalSales = results.reduce((sum, sale) => sum + parseFloat(sale.sale_total), 0);
+        const totalItemsSold = results.reduce((sum, sale) => sum + sale.co_quantity, 0);
+
+        console.log('Total Sales:', totalSales); // Log total sales
+        console.log('Total Items Sold:', totalItemsSold); // Log total items sold
+
+        res.json({ 
+            success: true, 
+            report: {
+                totalSales,
+                totalItemsSold,
+                sales: results
+            }
+        });
+    });
+});
 
 // Start the server
 const PORT = 5002;

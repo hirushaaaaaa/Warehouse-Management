@@ -5,13 +5,102 @@ function showMDDashboard() {
 }
 
 // Managing Director Functions
-function checkSalesReports() {
-    showModal("Sales Reports", `
-        <h3>Sales Overview</h3>
-        <div class="no-data-message">
-            <p>No sales reports found. Database integration pending.</p>
-        </div>
-    `);
+function salesReport() {
+    console.log('Fetching sales report...'); // Log the start of the function
+
+    fetch('http://localhost:5002/api/sales-report')
+        .then(response => {
+            console.log('Response received:', response); // Log the response
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data); // Log the data
+
+            if (!data.success) {
+                throw new Error(data.message);
+            }
+
+            const { totalSales, totalItemsSold, sales } = data.report;
+
+            // Create HTML for the sales report
+            const reportHtml = `
+                <h3>Summary</h3>
+                <p><strong>Total Sales:</strong> Rs. ${totalSales.toFixed(2)}</p>
+                <p><strong>Total Items Sold:</strong> ${totalItemsSold}</p>
+
+                <h3>Sales Details</h3>
+                <table border="1" style="width: 100%; text-align: center;">
+                    <thead>
+                        <tr>
+                            <th>Sale ID</th>
+                            <th>Order ID</th>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Unit Price (LKR)</th>
+                            <th>Total (LKR)</th>
+                            <th>Customer Name</th>
+                        
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sales.map(sale => `
+                            <tr>
+                                <td>${sale.sale_id}</td>
+                                <td>${sale.co_id}</td>
+                                <td>${sale.p_id}</td>
+                                <td>${sale.product_name}</td>
+                                <td>${sale.co_quantity}</td>
+                                <td>${sale.product_unit_price}</td>
+                                <td>${sale.sale_total}</td>
+                                <td>${sale.customer_name}</td>
+                              
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            // Display the modal with the sales report
+            showModal("Sales Report", reportHtml);
+        })
+        .catch(error => {
+            console.error('Error:', error); // Log the error
+            showModal("Error", "Failed to generate sales report. Please try again later.");
+        });
+}
+
+function showModal(title, content) {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.backgroundColor = 'white';
+    modal.style.padding = '20px';
+    modal.style.border = '1px solid #ccc';
+    modal.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+    modal.style.zIndex = '1000';
+    modal.style.width = '80%';
+    modal.style.maxWidth = '1000px';
+
+    modal.innerHTML = `
+        <h2>${title}</h2>
+        ${content}
+        <button onclick="document.body.removeChild(this.parentElement)">Close</button>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function closeSalesReportModal() {
+    const modal = document.getElementById('sales-report-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function approveLetters() {
@@ -110,7 +199,7 @@ function generateStockReport() {
         <h3>Generating Report...</h3>
         <div class="loading">Loading report data...</div>
     `;
-    showModal("Report", loadingContent);
+    showModal("Stock Management Report", loadingContent);
 
     fetch('http://localhost:5002/api/stock/report')
         .then(response => response.json())
@@ -121,24 +210,31 @@ function generateStockReport() {
 
             const reportContent = `
                 <h3>Stock Management Report</h3>
-                <div class="report-section">
-                    <h4>Total Stock Arrivals</h4>
-                    <p>Good Stock: ${data.totalArrivals.good_stock}</p>
-                    <p>Damaged Stock: ${data.totalArrivals.damaged_stock}</p>
-                    <p>Raw Stock: ${data.totalArrivals.raw_stock}</p>
+
+                <!-- Summary Table -->
+                <div class="summary-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Good Stock</strong></td><td>${data.totalArrivals.good_stock}</td></tr>
+                            <tr><td><strong>Damaged Stock</strong></td><td>${data.totalArrivals.damaged_stock}</td></tr>
+                            <tr><td><strong>Raw Stock</strong></td><td>${data.totalArrivals.raw_stock}</td></tr>
+                            <tr><td><strong>Total Departures</strong></td><td>${data.totalDepartures.total_departures}</td></tr>
+                            <tr><td><strong>Pending Orders</strong></td><td>${data.pendingOrders.pending_orders}</td></tr>
+                            <tr><td><strong>Completed Orders</strong></td><td>${data.completedOrders.completed_orders}</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="report-section">
-                    <h4>Total Stock Departures</h4>
-                    <p>Total Departures: ${data.totalDepartures.total_departures}</p>
-                </div>
-                <div class="report-section">
-                    <h4>Customer Orders</h4>
-                    <p>Pending Orders: ${data.pendingOrders.pending_orders}</p>
-                    <p>Completed Orders: ${data.completedOrders.completed_orders}</p>
-                </div>
-                <div class="report-section">
+
+                <!-- Stock Levels Table -->
+                <div class="table-wrapper">
                     <h4>Stock Levels</h4>
-                    <table class="table table-striped">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Product ID</th>
@@ -158,13 +254,18 @@ function generateStockReport() {
                     </table>
                 </div>
             `;
-            showModal("Report", reportContent);
+
+            showModal("Stock Management Report", reportContent);
         })
         .catch(error => {
             console.error('Error generating report:', error);
             showModal("Error", "Failed to generate report. Please try again later.");
         });
 }
+
+
+
+
 
 function manageJobApplications() {
     showModal("Job Applications", `

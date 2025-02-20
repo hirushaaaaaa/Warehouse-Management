@@ -289,17 +289,17 @@ function submitOrder() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.message === "Order placed successfully") {
-            alert("Order placed successfully!");
+        if (data.success) { // Check for the success property
+            alert(data.message); // Show success message
             closeOrderModal();
             fetchStockData(); // Refresh stock table
         } else {
-            alert("Error placing order: " + data.message);
+            throw new Error(data.message); // Throw error if success is false
         }
     })
     .catch(error => {
         console.error("Error placing order:", error);
-        alert("Error processing order.");
+        alert(error.message); // Show error message
     });
 }
 
