@@ -1,7 +1,7 @@
-// modal.js
 
-// Function to show a modal with a title and content
-function showModal(title, content) {
+function showModal(title, content, isWide = false) {
+    closeModal(); // Close any existing modal before opening a new one
+
     // Create the modal container
     const modalContainer = document.createElement('div');
     modalContainer.classList.add('modal-container');
@@ -9,60 +9,68 @@ function showModal(title, content) {
     // Create the modal overlay
     const modalOverlay = document.createElement('div');
     modalOverlay.classList.add('modal-overlay');
+    modalOverlay.addEventListener('click', closeModal);
 
     // Create the modal content
     const modalContent = document.createElement('div');
     modalContent.classList.add('modal-content');
+    if (isWide) {
+        modalContent.classList.add('wide-modal');
+    }
 
     // Add the title
     const modalTitle = document.createElement('h2');
     modalTitle.textContent = title;
-    modalContent.appendChild(modalTitle);
 
-    // Add the content
+    // Add the scrollable modal body
     const modalBody = document.createElement('div');
+    modalBody.classList.add('modal-body');
     modalBody.innerHTML = content;
-    modalContent.appendChild(modalBody);
 
-    // Add a close button
+    // Create a fixed close button at the bottom
     const closeButton = document.createElement('button');
     closeButton.classList.add('modal-close-button');
     closeButton.textContent = 'Close';
-    closeButton.addEventListener('click', () => {
-        document.body.removeChild(modalContainer);
-    });
+    closeButton.addEventListener('click', closeModal);
+
+    // Append elements
+    modalContent.appendChild(modalTitle);
+    modalContent.appendChild(modalBody);
     modalContent.appendChild(closeButton);
 
-    // Append the modal content to the container
     modalContainer.appendChild(modalOverlay);
     modalContainer.appendChild(modalContent);
-
-    // Append the modal to the body
     document.body.appendChild(modalContainer);
-
-    // Close modal when clicking outside the content
-    modalOverlay.addEventListener('click', () => {
-        document.body.removeChild(modalContainer);
-    });
 }
 
-// Function to close the modal
 function closeModal() {
-    const modalContainer = document.querySelector('.modal-container');
-    if (modalContainer) {
-        document.body.removeChild(modalContainer);
+    document.querySelectorAll('.modal-container').forEach(container => container.remove());
+}
+
+// Fetch staff data from API
+async function fetchStaffData() {
+    try {
+        const response = await fetch('http://localhost:5002/api/staff');
+        if (!response.ok) throw new Error('Failed to fetch staff data');
+        return await response.json();
+    } catch (error) {
+        console.error('Error:', error);
+        return [];
     }
 }
 
+
+// Show staff management modal with data
 async function showStaffManagementModal() {
     const staffData = await fetchStaffData();
-    
+
     const modalContent = `
         <div class="staff-management-container">
             <h3>Staff Management</h3>
-            ${staffData.length === 0 ?
-                '<div class="no-data-message">No staff records found.</div>' :
-                `<table class="staff-table">
+            ${staffData.length === 0 ? `
+                <div class="no-data-message">No staff records found.</div>
+            ` : `
+                <table class="staff-table">
                     <thead>
                         <tr>
                             <th>Staff ID</th>
@@ -80,44 +88,25 @@ async function showStaffManagementModal() {
                             <tr data-staff-id="${staff.staff_id}">
                                 <td>${staff.staff_id}</td>
                                 <td>${staff.role}</td>
+                                <td><input type="text" class="edit-name" value="${staff.name}"></td>
+                                <td><input type="email" class="edit-email" value="${staff.email}"></td>
+                                <td><input type="tel" class="edit-phone" value="${staff.tele_no}"></td>
                                 <td>
-                                    <input type="text" class="edit-name" 
-                                           value="${staff.name}" 
-                                           placeholder="Full Name">
-                                </td>
-                                <td>
-                                    <input type="email" class="edit-email" 
-                                           value="${staff.email}" 
-                                           placeholder="Email">
-                                </td>
-                                <td>
-                                    <input type="tel" class="edit-phone" 
-                                           value="${staff.tele_no}" 
-                                           placeholder="Phone">
-                                </td>
-                                <td>
-                                    <input type="text" class="edit-no" 
-                                           value="${staff.no}" 
-                                           placeholder="No">
-                                    <input type="text" class="edit-street" 
-                                           value="${staff.street}" 
-                                           placeholder="Street">
+                                    <input type="text" class="edit-no" value="${staff.no}" placeholder="No">
+                                    <input type="text" class="edit-street" value="${staff.street}" placeholder="Street">
                                 </td>
                                 <td>${staff.city}</td>
                                 <td>
-                                    <button onclick="updateStaffMember('${staff.staff_id}')">
-                                        Update
-                                    </button>
+                                    <button onclick="updateStaffMember('${staff.staff_id}')">Update</button>
                                 </td>
                             </tr>
                         `).join('')}
                     </tbody>
-                </table>`
-            }
+                </table>
+            `}
         </div>
     `;
 
-    // Pass true as third parameter to indicate it's a wide modal
+    // Pass `true` to make the modal wide
     showModal("Staff Management", modalContent, true);
 }
-

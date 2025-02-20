@@ -134,8 +134,9 @@ function showSuccess(message) {
 
 
 function recordNewStock() {
+    // Show the modal with the stock entry form (without the extra close button)
     showModal("Record New Stock", `
-        <h3>New Stock Entry</h3>
+        
         <form id="newStockForm">
             <label for="gmoId">Select GMO ID:</label>
             <select id="gmoId" required>
@@ -161,12 +162,17 @@ function recordNewStock() {
         </form>
     `);
 
+    // Fetch available GMO IDs and barcode scanners
     fetchAvailableGMOIds();
     fetchBarcodeScanners();
 
+    // Event listeners
     document.getElementById('gmoId').addEventListener('change', fetchGmoDetails);
     document.getElementById('newStockForm').addEventListener('submit', processShipment);
 }
+
+
+
 
 function fetchAvailableGMOIds(excludeGmoId = null) {
     fetch('http://localhost:5002/api/stock/gmo-ids')
@@ -370,53 +376,43 @@ function sendOffStock() {
             return response.json();
         })
         .then(data => {
-            // Create the modal structure
-            const modal = document.createElement('div');
-            modal.id = 'sendStockModal';
-            modal.className = 'modal';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    <h2>Send Off Stock</h2>
-                    <form id="sendStockForm">
-                        <label for="coId">Select Order ID:</label>
-                        <select id="coId" required>
-                            <option value="" disabled selected>Select Order ID</option>
-                            ${data.map(order => `
-                                <option value="${order.co_id}">Order ID: ${order.co_id}</option>
-                            `).join('')}
-                        </select>
+            // Create the modal structure (without the close button)
+            const modalContent = `
+                
+                <form id="sendStockForm">
+                    <label for="coId">Select Order ID:</label>
+                    <select id="coId" required>
+                        <option value="" disabled selected>Select Order ID</option>
+                        ${data.map(order => `
+                            <option value="${order.co_id}">Order ID: ${order.co_id}</option>
+                        `).join('')}
+                    </select>
 
-                        <label for="userId">User ID:</label>
-                        <input type="text" id="userId" readonly>
+                    <label for="userId">User ID:</label>
+                    <input type="text" id="userId" readonly>
 
-                        <label for="pId">Product ID:</label>
-                        <input type="text" id="pId" readonly>
+                    <label for="pId">Product ID:</label>
+                    <input type="text" id="pId" readonly>
 
-                        <label for="quantity">Quantity:</label>
-                        <input type="number" id="quantity" readonly>
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" readonly>
 
-                        <label for="total">Total:</label>
-                        <input type="number" id="total" readonly>
+                    <label for="total">Total:</label>
+                    <input type="number" id="total" readonly>
 
-                        <button type="submit">Send Stock</button>
-                        <button type="button" class="close-button" onclick="closeModal()">Close</button>
-                    </form>
-                </div>
+                    <button type="submit">Send Stock</button>
+                </form>
             `;
 
-            // Append the modal to the body
-            document.body.appendChild(modal);
-
-            // Display the modal
-            modal.style.display = 'block';
+            // Show modal with the constructed content (close button will be added by showModal)
+            showModal('Send Off Stock', modalContent);
 
             // Add event listener to the dropdown
             document.getElementById('coId').addEventListener('change', (event) => {
                 const selectedOrder = data.find(order => order.co_id == event.target.value);
                 if (selectedOrder) {
                     document.getElementById('userId').value = selectedOrder.user_id;
-                    document.getElementById('pId').value = selectedOrder.p_id; // Populate Product ID
+                    document.getElementById('pId').value = selectedOrder.p_id;
                     document.getElementById('quantity').value = selectedOrder.quantity;
                     document.getElementById('total').value = selectedOrder.total;
                 }
@@ -425,35 +421,33 @@ function sendOffStock() {
             // Handle form submission
             document.getElementById('sendStockForm').addEventListener('submit', (event) => {
                 event.preventDefault();
+
                 const coId = document.getElementById('coId').value;
                 const userId = document.getElementById('userId').value;
-                const pId = document.getElementById('pId').value; // Get Product ID
+                const pId = document.getElementById('pId').value;
                 const quantity = document.getElementById('quantity').value;
                 const total = document.getElementById('total').value;
 
-                // Send stock data to the backend
                 fetch('http://localhost:5002/api/send-co-stock', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ co_id: coId, user_id: userId, p_id: pId, quantity: quantity, total: total }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ co_id: coId, user_id: userId, p_id: pId, quantity, total }),
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Failed to send stock');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        alert('Stock sent successfully');
-                        document.getElementById('sendStockForm').reset(); // Clear form fields
-                        closeModal();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Failed to send stock');
-                    });
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to send stock');
+                    return response.json();
+                })
+                .then(data => {
+                    alert('Stock sent successfully');
+                    closeModal();
+                    setTimeout(() => {
+                        window.location.href = '/warehouse-dashboard';
+                    }, 200);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to send stock');
+                });
             });
         })
         .catch(error => {
@@ -462,13 +456,6 @@ function sendOffStock() {
         });
 }
 
-// Close modal function
-function closeModal() {
-    const modal = document.getElementById('sendStockModal');
-    if (modal) {
-        modal.remove(); // Remove the modal from the DOM
-    }
-}
 
 
 

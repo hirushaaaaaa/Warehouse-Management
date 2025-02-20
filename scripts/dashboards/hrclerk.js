@@ -6,41 +6,38 @@ function showHRClerkDashboard() {
 
 function handleLeaveRequest() {
     showModal("Leave Request Handler", `
-        <h3>Process Leave Requests</h3>
-        <div class="modal-content">
-            <button class="modal-close-button" onclick="closeModal()">X</button> <!-- Close Button -->
-            <form id="leaveRequestForm" onsubmit="submitLeaveRequest(event)">
-                <div class="form-group">
-                    <select id="employeeSelect" name="employee_id" required>
-                        <option value="">Select Employee</option>
-                        <option value="emp1">Employee 1</option>
-                        <option value="emp2">Employee 2</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="leaveType" name="leave_type" required>
-                        <option value="">Select Leave Type</option>
-                        <option value="annual">Annual Leave</option>
-                        <option value="sick">Sick Leave</option>
-                        <option value="personal">Personal Leave</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <input type="date" name="start_date" required>
-                </div>
-                <div class="form-group">
-                    <input type="date" name="end_date" required>
-                </div>
-                <div class="form-group">
-                    <textarea name="comments" placeholder="Comments" required></textarea>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="submit-btn">Submit Leave Request</button>
-                </div>
-            </form>
-        </div>
+        <form id="leaveRequestForm" onsubmit="submitLeaveRequest(event)">
+            <div class="form-group">
+                <select id="employeeSelect" name="employee_id" required>
+                    <option value="">Select Employee</option>
+                    <option value="emp1">Employee 1</option>
+                    <option value="emp2">Employee 2</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <select id="leaveType" name="leave_type" required>
+                    <option value="">Select Leave Type</option>
+                    <option value="annual">Annual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="personal">Personal Leave</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="date" name="start_date" required>
+            </div>
+            <div class="form-group">
+                <input type="date" name="end_date" required>
+            </div>
+            <div class="form-group">
+                <textarea name="comments" placeholder="Comments" required></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="submit-btn">Submit Leave Request</button>
+            </div>
+        </form>
     `);
 }
+
 
 async function submitLeaveRequest(event) {
     event.preventDefault();
