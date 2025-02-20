@@ -91,14 +91,12 @@ function leaveRequests() {
     // Fetch leave requests from the server
     fetch('http://localhost:5002/api/leaves')
         .then(response => {
-            console.log('Response:', response); // Debugging
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
-            console.log('Data:', data); // Debugging
             if (data.success) {
                 const leaveRequests = data.leaves;
                 let modalContent = `
@@ -181,6 +179,7 @@ function rejectLeave(leaveId) {
     updateLeaveStatus(leaveId, 'REJECTED');
 }
 
+
 // Update Leave Status
 function updateLeaveStatus(leaveId, status) {
     fetch(`http://localhost:5002/api/leaves/${leaveId}/status`, {
@@ -199,7 +198,8 @@ function updateLeaveStatus(leaveId, status) {
     .then(data => {
         if (data.success) {
             alert('Leave status updated successfully!');
-            manageLeaves(); // Refresh the leave requests list
+            closeModal(); // Close the current modal
+            leaveRequests(); // Refresh the leave requests list
         } else {
             alert('Error updating leave status: ' + data.message);
         }
@@ -209,5 +209,4 @@ function updateLeaveStatus(leaveId, status) {
         alert('Failed to update leave status. Please try again.');
     });
 }
-
 

@@ -1,31 +1,56 @@
+// modal.js
+
+// Function to show a modal with a title and content
 function showModal(title, content) {
-    const modalHtml = `
-        <div class="modal">
-            <div class="modal-content">
-                <span class="close-modal" onclick="closeModal()">&times;</span>
-                <h2>${title}</h2>
-                ${content}
-            </div>
-        </div>
-    `;
+    // Create the modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.classList.add('modal-container');
 
-    const existingModal = document.querySelector('.modal');
-    if (existingModal) existingModal.remove();
+    // Create the modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.classList.add('modal-overlay');
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    document.querySelector('.modal').style.display = 'block';
+    // Create the modal content
+    const modalContent = document.createElement('div');
+    modalContent.classList.add('modal-content');
+
+    // Add the title
+    const modalTitle = document.createElement('h2');
+    modalTitle.textContent = title;
+    modalContent.appendChild(modalTitle);
+
+    // Add the content
+    const modalBody = document.createElement('div');
+    modalBody.innerHTML = content;
+    modalContent.appendChild(modalBody);
+
+    // Add a close button
+    const closeButton = document.createElement('button');
+    closeButton.classList.add('modal-close-button');
+    closeButton.textContent = 'Close';
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(modalContainer);
+    });
+    modalContent.appendChild(closeButton);
+
+    // Append the modal content to the container
+    modalContainer.appendChild(modalOverlay);
+    modalContainer.appendChild(modalContent);
+
+    // Append the modal to the body
+    document.body.appendChild(modalContainer);
+
+    // Close modal when clicking outside the content
+    modalOverlay.addEventListener('click', () => {
+        document.body.removeChild(modalContainer);
+    });
 }
 
+// Function to close the modal
 function closeModal() {
-    const modal = document.querySelector('.modal');
-    if (modal) modal.remove();
-}
-
-// Close modal when clicking outside
-window.onclick = function (event) {
-    const modal = document.querySelector('.modal');
-    if (event.target === modal) {
-        closeModal();
+    const modalContainer = document.querySelector('.modal-container');
+    if (modalContainer) {
+        document.body.removeChild(modalContainer);
     }
 }
 
@@ -92,34 +117,7 @@ async function showStaffManagementModal() {
         </div>
     `;
 
-    showModal("Staff Management", modalContent);
-}
-
-function showModal(title, content) {
-    // Create or update the modal structure
-    const modal = document.createElement('div');
-    modal.id = 'dynamicModal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>${title}</h2>
-            ${content}
-        </div>
-    `;
-
-    // Append the modal to the body
-    document.body.appendChild(modal);
-
-    // Display the modal
-    modal.style.display = 'block';
-}
-
-function closeModal() {
-    const modal = document.getElementById('dynamicModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.remove(); // Remove the modal from the DOM
-    }
+    // Pass true as third parameter to indicate it's a wide modal
+    showModal("Staff Management", modalContent, true);
 }
 

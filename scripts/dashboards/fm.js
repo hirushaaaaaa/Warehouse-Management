@@ -166,7 +166,7 @@ function payrollManagement() {
             }
 
             if (data.payroll.length === 0) {
-                showModal("Payroll Management", `
+                showModal("Payroll Management", ` 
                     <h3>Payroll Data</h3>
                     <p>No payroll data found.</p>
                 `);
@@ -185,9 +185,12 @@ function payrollManagement() {
                 </div>
             `).join('');
 
+            // Show modal with scrollable content
             showModal("Payroll Management", `
                 <h3>Payroll Data</h3>
-                ${payrollHtml}
+                <div class="scrollable-modal-content">
+                    ${payrollHtml}
+                </div>
             `);
         })
         .catch(error => {
@@ -195,6 +198,7 @@ function payrollManagement() {
             showModal("Error", "Failed to fetch payroll data. Please try again later.");
         });
 }
+
 
 function editSalary(user_id, currentAmount) {
     const newAmount = prompt(`Enter the new amount (LKR) for User ID ${user_id}:`, currentAmount);

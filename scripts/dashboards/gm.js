@@ -72,7 +72,14 @@ function manageOrderApprovals() {
                 `;
             }).join('');
 
-            showModal("Order Approvals", ordersHtml);
+            // Wrap the content in a scrollable container
+            const scrollableContent = `
+                <div class="scrollable-modal-content">
+                    ${ordersHtml}
+                </div>
+            `;
+
+            showModal("Order Approvals", scrollableContent);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -134,7 +141,7 @@ function reviewReport() {
 // In gm.js - Updated placeOrder function
 function placeOrder() {
     showModal("Place Order", `
-        <h3>New Order</h3>
+        
         <form id="orderForm" class="order-form">
             <div class="form-group">
                 <label for="productId">Product ID:</label>
@@ -352,63 +359,66 @@ function showStaffManagementModal(staffData) {
             <h3>Staff Management</h3>
             ${staffData.length === 0 ?
                 '<div class="no-data-message">No staff records found.</div>' :
-                `<table class="staff-table">
-                    <thead>
-                        <tr>
-                            <th>Staff ID</th>
-                            <th>Role</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th>Street</th>
-                            <th>City</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${staffData.map(staff => `
-                            <tr data-staff-id="${staff.staff_id}">
-                                <td>${staff.staff_id}</td>
-                                <td>${staff.role}</td>
-                                <td>
-                                    <input type="text" class="edit-name" 
-                                           value="${staff.name}" 
-                                           placeholder="Full Name">
-                                </td>
-                                <td>
-                                    <input type="email" class="edit-email" 
-                                           value="${staff.email}" 
-                                           placeholder="Email">
-                                </td>
-                                <td>
-                                    <input type="tel" class="edit-phone" 
-                                           value="${staff.tele_no}" 
-                                           placeholder="Phone">
-                                </td>
-                                <td>
-                                    <input type="text" class="edit-no" 
-                                           value="${staff.no}" 
-                                           placeholder="No">
-                                </td>
-                                <td> 
-                                    <input type="text" class="edit-street" 
-                                           value="${staff.street}" 
-                                           placeholder="Street">
-                                </td>
-                                <td><input type="text" class="edit-city" 
-                                           value="${staff.city}" 
-                                           placeholder="City">
-                                </td>
-                                <td>
-                                    <button onclick="updateStaffMember('${staff.staff_id}')">
-                                        Update
-                                    </button>
-                                </td>
+                `<div class="table-scroll-container">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Staff ID</th>
+                                <th>Role</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Street</th>
+                                <th>City</th>
+                                <th>Actions</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>`
+                        </thead>
+                        <tbody>
+                            ${staffData.map(staff => `
+                                <tr data-staff-id="${staff.staff_id}">
+                                    <td>${staff.staff_id}</td>
+                                    <td>${staff.role}</td>
+                                    <td>
+                                        <input type="text" class="edit-name" 
+                                               value="${staff.name}" 
+                                               placeholder="Full Name">
+                                    </td>
+                                    <td>
+                                        <input type="email" class="edit-email" 
+                                               value="${staff.email}" 
+                                               placeholder="Email">
+                                    </td>
+                                    <td>
+                                        <input type="tel" class="edit-phone" 
+                                               value="${staff.tele_no}" 
+                                               placeholder="Phone">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="edit-no" 
+                                               value="${staff.no}" 
+                                               placeholder="No">
+                                    </td>
+                                    <td> 
+                                        <input type="text" class="edit-street" 
+                                               value="${staff.street}" 
+                                               placeholder="Street">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="edit-city" 
+                                               value="${staff.city}" 
+                                               placeholder="City">
+                                    </td>
+                                    <td>
+                                        <button onclick="updateStaffMember('${staff.staff_id}')">
+                                            Update
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`
             }
         </div>
     `;
@@ -492,55 +502,58 @@ async function updateStaffMember(staffId) {
 function manageSuppliers() {
     const modalContent = `
         <h3>Add New Supplier</h3>
-        <form id="addSupplierForm" onsubmit="saveSupplier(event)">
-            <div class="form-group">
-                <label for="supId">Supplier ID:</label>
-                <input type="text" id="supId" name="supId" required maxlength="10" 
-                    pattern="[A-Za-z0-9]+" title="Only letters and numbers allowed"
-                    class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required maxlength="100" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="no">Building No:</label>
-                <input type="text" id="no" name="no" required maxlength="10" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="street">Street:</label>
-                <input type="text" id="street" name="street" required maxlength="100" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="city">City:</label>
-                <input type="text" id="city" name="city" required maxlength="50" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required maxlength="100" class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="teleNo">Telephone:</label>
-                <input type="tel" id="teleNo" name="teleNo" required maxlength="20" 
-                    pattern="[0-9]+" title="Only numbers allowed"
-                    class="form-control">
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required 
-                    minlength="6" maxlength="50" 
-                    class="form-control">
-                <small class="form-text text-muted">Password must be at least 6 characters long</small>
-            </div>
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">Save Supplier</button>
-            </div>
-        </form>
+        <div class="scrollable-modal-content">
+            <form id="addSupplierForm" onsubmit="saveSupplier(event)">
+                <div class="form-group">
+                    <label for="supId">Supplier ID:</label>
+                    <input type="text" id="supId" name="supId" required maxlength="10" 
+                        pattern="[A-Za-z0-9]+" title="Only letters and numbers allowed"
+                        class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required maxlength="100" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="no">Building No:</label>
+                    <input type="text" id="no" name="no" required maxlength="10" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="street">Street:</label>
+                    <input type="text" id="street" name="street" required maxlength="100" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="city">City:</label>
+                    <input type="text" id="city" name="city" required maxlength="50" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required maxlength="100" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="teleNo">Telephone:</label>
+                    <input type="tel" id="teleNo" name="teleNo" required maxlength="20" 
+                        pattern="[0-9]+" title="Only numbers allowed"
+                        class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required 
+                        minlength="6" maxlength="50" 
+                        class="form-control">
+                    <small class="form-text text-muted">Password must be at least 6 characters long</small>
+                </div>
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">Save Supplier</button>
+                </div>
+            </form>
+        </div>
     `;
 
     showModal("Add Supplier", modalContent);
 }
+
 
 function saveSupplier(event) {
     event.preventDefault();

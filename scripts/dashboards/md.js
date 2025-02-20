@@ -195,11 +195,11 @@ function updateLetterStatus(letterId, status) {
 }
 
 function generateStockReport() {
-    const loadingContent = `
-        <h3>Generating Report...</h3>
-        <div class="loading">Loading report data...</div>
-    `;
-    showModal("Stock Management Report", loadingContent);
+    // Close any existing modal before opening a new one
+    closeModal();  // Close any existing modal if open
+    
+    // Show loading modal (can be omitted if no need for loading state)
+    //showModal("Report", `<h3>Loading report data...</h3>`);
 
     fetch('http://localhost:5002/api/stock/report')
         .then(response => response.json())
@@ -210,52 +210,46 @@ function generateStockReport() {
 
             const reportContent = `
                 <h3>Stock Management Report</h3>
-
-                <!-- Summary Table -->
-                <div class="summary-table">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Category</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><strong>Good Stock</strong></td><td>${data.totalArrivals.good_stock}</td></tr>
-                            <tr><td><strong>Damaged Stock</strong></td><td>${data.totalArrivals.damaged_stock}</td></tr>
-                            <tr><td><strong>Raw Stock</strong></td><td>${data.totalArrivals.raw_stock}</td></tr>
-                            <tr><td><strong>Total Departures</strong></td><td>${data.totalDepartures.total_departures}</td></tr>
-                            <tr><td><strong>Pending Orders</strong></td><td>${data.pendingOrders.pending_orders}</td></tr>
-                            <tr><td><strong>Completed Orders</strong></td><td>${data.completedOrders.completed_orders}</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Stock Levels Table -->
-                <div class="table-wrapper">
-                    <h4>Stock Levels</h4>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Product ID</th>
-                                <th>Product Name</th>
-                                <th>Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.stockLevels.map(stock => `
+                <div class="scrollable-modal-content">
+                    <div class="report-section">
+                        <h4>Total Stock Arrivals</h4>
+                        <p>Good Stock: ${data.totalArrivals.good_stock}</p>
+                        <p>Damaged Stock: ${data.totalArrivals.damaged_stock}</p>
+                        <p>Raw Stock: ${data.totalArrivals.raw_stock}</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>Total Stock Departures</h4>
+                        <p>Total Departures: ${data.totalDepartures.total_departures}</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>Customer Orders</h4>
+                        <p>Pending Orders: ${data.pendingOrders.pending_orders}</p>
+                        <p>Completed Orders: ${data.completedOrders.completed_orders}</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>Stock Levels</h4>
+                        <table class="table table-striped">
+                            <thead>
                                 <tr>
-                                    <td>${stock.p_id}</td>
-                                    <td>${stock.p_name}</td>
-                                    <td>${stock.p_quantity}</td>
+                                    <th>Product ID</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                ${data.stockLevels.map(stock => `
+                                    <tr>
+                                        <td>${stock.p_id}</td>
+                                        <td>${stock.p_name}</td>
+                                        <td>${stock.p_quantity}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             `;
-
-            showModal("Stock Management Report", reportContent);
+            showModal("Report", reportContent);
         })
         .catch(error => {
             console.error('Error generating report:', error);
@@ -275,3 +269,4 @@ function manageJobApplications() {
         </div>
     `);
 }
+

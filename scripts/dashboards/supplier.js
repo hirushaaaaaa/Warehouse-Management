@@ -350,11 +350,7 @@ function updateStock() {
 
 //most purchased item report
 function generateMostPurchasedReport() {
-    const loadingContent = `
-        <h3>Generating Report...</h3>
-        <div class="loading">Loading report data...</div>
-    `;
-    showModal("Most Purchased Products Report", loadingContent);
+    closeModal();
 
     fetch('http://localhost:5002/api/most-purchased-products')
         .then(response => response.json())

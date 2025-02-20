@@ -1,43 +1,144 @@
 /* modal.css */
-.modal {
-    display: none;
+
+/* Modal container */
+.modal-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
     z-index: 1000;
 }
 
-.modal-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 600px;
-    margin: 50px auto;
-    position: relative;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.close-modal {
+/* Modal overlay */
+.modal-overlay {
     position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.3s ease;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    z-index: 1;
 }
 
-.close-modal:hover {
-    color: #000;
+/* Modal content */
+.modal-content {
+    position: relative;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    z-index: 2;
+}
+
+/* Modal title */
+.modal-content h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+/* Modal close button */
+.modal-close-button {
+    display: block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-close-button:hover {
+    background-color: #c82333;
+}
+
+/* Table styling */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.table th, .table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.table-striped tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.scrollable-modal-content {
+    max-height: 400px; /* You can adjust this height as needed */
+    overflow-y: auto;
+    padding: 10px;
+}
+
+
+/* Loading spinner */
+.loading {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #555;
 }
 
 .modal h2 {
     margin-top: 0;
     color: #2C3E50;
+}
+
+/* Staff management specific styles */
+.staff-management-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.staff-table th, .staff-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    white-space: nowrap;
+}
+
+.staff-table input {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 100px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.no-data-message {
+    text-align: center;
+    color: #721c24;
+    padding: 20px;
+    background-color: #f8d7da;
+    border-radius: 5px;
+    margin: 10px 0;
 }
 
 /* Alert styles */
@@ -96,42 +197,7 @@
     100% { transform: rotate(360deg); }
 }
 
-.staff-management-container {
-    width: 100%;
-    max-width: none;
-    overflow-x: auto;
-}
-
-.staff-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.staff-table th, .staff-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    white-space: nowrap;
-}
-
-.staff-table input {
-    width: 100%;
-    box-sizing: border-box;
-    min-width: 100px;
-}
-
-.modal-content {
-    width: 95vw;
-    max-width: 1600px;
-    margin: 0 auto;
-    overflow-x: auto;
-}
-
-.no-data-message {
-    text-align: center;
-    color: red;
-    padding: 20px;
-}
-
+/* Form styles inside modals */
 .form-group {
     margin-bottom: 15px;
 }
@@ -140,10 +206,10 @@
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    color: #2C3E50;
 }
 
-.form-group select,
-.form-group input {
+.form-group select, .form-group input, .form-group textarea {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -151,8 +217,7 @@
     font-size: 14px;
 }
 
-.error-message,
-.success-message {
+.error-message, .success-message {
     padding: 10px;
     margin: 10px 0;
     border-radius: 4px;
@@ -183,41 +248,121 @@
     background-color: #45a049;
 }
 
-
-/* Table styling */
-.table-responsive {
-    overflow-x: auto;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-content, .modal-content.wide {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+    
+    .staff-table {
+        font-size: 14px;
+    }
+    
+    .staff-table input {
+        font-size: 14px;
+        padding: 6px;
+    }
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+
+/* CSS for Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
 }
 
-.table th, .table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+.close-btn:hover {
+    color: #e74c3c; /* Red color on hover */
 }
 
-.table th {
-    background-color: #f4f4f4;
+/* Container for the scrollable table */
+.table-scroll-container {
+    max-height: 400px; /* Adjust the height as needed */
+    max-width: 100%; /* Ensure it doesn't overflow the modal */
+    overflow-x: auto; /* Horizontal scrolling */
+    overflow-y: auto; /* Vertical scrolling */
+    border: 1px solid #ddd; /* Optional: Add a border */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    margin-top: 10px; /* Spacing from the heading */
 }
 
-/* Status styling */
-.status {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
+/* Staff table styling */
+.staff-table {
+    width: 100%; /* Ensure the table takes full width */
+    border-collapse: collapse; /* Remove spacing between cells */
 }
 
-.status.urgent {
-    background-color: #ffcccc;
-    color: #ff0000;
+.staff-table th,
+.staff-table td {
+    padding: 10px; /* Add padding for better readability */
+    border: 1px solid #ddd; /* Add borders to cells */
+    text-align: left; /* Align text to the left */
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
-.status.warning {
-    background-color: #fff3cd;
-    color: #ffc107;
+.staff-table th {
+    background-color: #f5f5f5; /* Light gray background for headers */
+    font-weight: bold; /* Bold headers */
+}
+
+/* Input fields styling */
+.edit-name,
+.edit-email,
+.edit-phone,
+.edit-no,
+.edit-street,
+.edit-city {
+    width: 100%; /* Make inputs fill the cell */
+    padding: 5px; /* Add padding for better appearance */
+    border: 1px solid #ccc; /* Add a border */
+    border-radius: 3px; /* Rounded corners */
+}
+
+/* Button styling */
+button {
+    padding: 5px 10px; /* Add padding */
+    background-color: #007bff; /* Blue background */
+    color: white; /* White text */
+    border: none; /* Remove border */
+    border-radius: 3px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+}
+
+button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* No data message styling */
+.no-data-message {
+    text-align: center; /* Center the message */
+    padding: 20px; /* Add padding */
+    color: #888; /* Gray text */
+}
+
+/* Delivery item styling */
+.delivery-item {
+    margin-bottom: 15px; /* Add spacing between delivery items */
+    padding: 10px; /* Add padding for better appearance */
+    border: 1px solid #ccc; /* Add a border */
+    border-radius: 4px; /* Rounded corners */
+    background-color: #fff; /* White background */
+}
+
+.delivery-item p {
+    margin: 5px 0; /* Add spacing between paragraphs */
+}
+
+/* No data message styling */
+.no-data-message {
+    text-align: center; /* Center the message */
+    padding: 20px; /* Add padding */
+    color: #888; /* Gray text */
 }

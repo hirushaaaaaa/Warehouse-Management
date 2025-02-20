@@ -360,11 +360,6 @@ function resetForm() {
 }
 
 
-
-
-
-
-
 function sendOffStock() {
     // Fetch pending orders
     fetch('http://localhost:5002/api/co-pending-orders')
@@ -405,6 +400,7 @@ function sendOffStock() {
                         <input type="number" id="total" readonly>
 
                         <button type="submit">Send Stock</button>
+                        <button type="button" class="close-button" onclick="closeModal()">Close</button>
                     </form>
                 </div>
             `;
@@ -451,6 +447,7 @@ function sendOffStock() {
                     })
                     .then(data => {
                         alert('Stock sent successfully');
+                        document.getElementById('sendStockForm').reset(); // Clear form fields
                         closeModal();
                     })
                     .catch(error => {
@@ -464,6 +461,15 @@ function sendOffStock() {
             alert('Failed to fetch pending orders');
         });
 }
+
+// Close modal function
+function closeModal() {
+    const modal = document.getElementById('sendStockModal');
+    if (modal) {
+        modal.remove(); // Remove the modal from the DOM
+    }
+}
+
 
 
 

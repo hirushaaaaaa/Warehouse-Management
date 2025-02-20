@@ -36,7 +36,9 @@ function checkForUpcomingDeliveries() {
             // Show modal with the list of upcoming deliveries
             showModal("Upcoming Deliveries", `
                 <h3>Delivery Schedule</h3>
-                ${deliveriesHtml}
+                <div class="scrollable-modal-content">
+                    ${deliveriesHtml}
+                </div>
             `);
         })
         .catch(error => {
