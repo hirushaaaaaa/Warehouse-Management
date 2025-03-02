@@ -141,7 +141,6 @@ function reviewReport() {
 // In gm.js - Updated placeOrder function
 function placeOrder() {
     showModal("Place Order", `
-        
         <form id="orderForm" class="order-form">
             <div class="form-group">
                 <label for="productId">Product ID:</label>
@@ -273,7 +272,14 @@ function placeOrder() {
 
             if (data.success) {
                 alert('Order placed successfully!');
-                closeModal();
+                
+                // Clear the form
+                document.getElementById('orderForm').reset(); // Reset form fields
+                document.getElementById('productInfo').innerHTML = 'Select a product to see details'; // Clear product info
+                document.getElementById('totalPrice').textContent = 'Rs. 0.00'; // Reset total price
+                document.getElementById('quantityError').style.display = 'none'; // Hide error message
+                
+                closeModal(); // Close the modal
             } else {
                 quantityError.textContent = data.message;
                 quantityError.style.display = 'block';

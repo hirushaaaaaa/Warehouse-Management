@@ -12,15 +12,18 @@ function checkForNewOrders() {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            
+
             if (data.orders.length === 0) {
                 showModal("New Orders", `
                     <h3>Pending Orders</h3>
-                    <p>No new orders found.</p>
+                    <div class="no-data-message">
+                        <p>No new orders found.</p>
+                    </div>
                 `);
                 return;
             }
 
+            // Create HTML for each order
             const ordersHtml = data.orders.map(order => `
                 <div class="order-item">
                     <p><strong>Order ID:</strong> ${order.gmo_id}</p>
@@ -34,9 +37,12 @@ function checkForNewOrders() {
                 </div>
             `).join('');
 
+            // Show modal with the list of pending orders
             showModal("New Orders", `
                 <h3>Pending Orders</h3>
-                ${ordersHtml}
+                <div class="scrollable-modal-content">
+                    ${ordersHtml}
+                </div>
             `);
         })
         .catch(error => {
@@ -58,6 +64,10 @@ function updateOrderStatus(orderId, status) {
             if (!data.success) {
                 throw new Error(data.message);
             }
+
+            // Close the current modal before refreshing the orders list
+            closeModal();
+
             // Refresh the orders list
             checkForNewOrders();
         })
@@ -131,7 +141,12 @@ function sendOrder() {
                 throw new Error(data.message);
             }
             alert("Order sent successfully!");
-            prepareOrders(); // Refresh the orders list
+
+            // Close the current modal before refreshing the orders list
+            closeModal();
+
+            // Refresh the orders list
+            prepareOrders();
         })
         .catch(error => {
             console.error('Error:', error);

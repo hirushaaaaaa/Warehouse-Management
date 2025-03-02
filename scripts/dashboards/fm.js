@@ -99,15 +99,18 @@ function manageNewPurchase() {
             if (!data.success) {
                 throw new Error(data.message);
             }
-            
+
             if (data.orders.length === 0) {
                 showModal("Supplier Purchases", `
                     <h3>Accepted Orders</h3>
-                    <p>No new orders to process.</p>
+                    <div class="no-data-message">
+                        <p>No new orders to process.</p>
+                    </div>
                 `);
                 return;
             }
-            
+
+            // Create HTML for each order
             const ordersHtml = data.orders.map(order => `
                 <div class="order-item">
                     <p><strong>Order ID:</strong> ${order.gmo_id}</p>
@@ -120,10 +123,13 @@ function manageNewPurchase() {
                     </div>
                 </div>
             `).join('');
-            
+
+            // Show modal with the list of accepted orders
             showModal("Supplier Purchases", `
                 <h3>Accepted Orders</h3>
-                ${ordersHtml}
+                <div class="scrollable-modal-content">
+                    ${ordersHtml}
+                </div>
             `);
         })
         .catch(error => {

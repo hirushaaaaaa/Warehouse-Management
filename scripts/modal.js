@@ -1,4 +1,3 @@
-
 function showModal(title, content, isWide = false) {
     closeModal(); // Close any existing modal before opening a new one
 
@@ -41,10 +40,17 @@ function showModal(title, content, isWide = false) {
     modalContainer.appendChild(modalOverlay);
     modalContainer.appendChild(modalContent);
     document.body.appendChild(modalContainer);
+
+    // Prevent scrolling on the body when the modal is open
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
+    // Remove all modal containers
     document.querySelectorAll('.modal-container').forEach(container => container.remove());
+
+    // Restore body scrolling
+    document.body.style.overflow = 'auto';
 }
 
 // Fetch staff data from API

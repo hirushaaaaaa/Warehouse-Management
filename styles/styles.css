@@ -1,7 +1,14 @@
 body {
+    background-image: url(https://sterlitelubricants.com/KFHdGrYhS2RNCYbwjgmawfzCt/images/slide-5.jpg);
+    
+    background-size: cover;
+    background-position: center; 
+    background-repeat: no-repeat;   
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    position: 0;
+    margin-bottom: 450px;
     text-align: center;
     background-color: #f5f5f5;
 }
@@ -16,7 +23,11 @@ header {
 header h1 {
     margin: 0;
     font-size: 28px;
+}h2 {
+    color: white;
+    text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black; /* Black outline */
 }
+
 
 header p {
     margin: 5px 0 0;
@@ -42,8 +53,8 @@ button {
     font-size: 16px;
     color: white;
     background-color: #2C3E50;
-    border: none;
-    border-radius: 5px;
+    border: #000;
+    border-radius: px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -323,5 +334,5 @@ textarea {
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    100% { transform: rotate(360deg);}
 }
