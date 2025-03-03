@@ -2609,6 +2609,99 @@ app.get('/api/sales-report', (req, res) => {
     });
 });
 
+// API to fetch salary data
+app.get('/api/salary-data', (req, res) => {
+    const query = `
+        SELECT 
+            user_id AS 'User Id', 
+            username AS 'Username', 
+            role_type AS 'Role Type', 
+            amount AS 'Amount'
+        FROM payroll;
+    `;
+
+    // Execute the query
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching salary data:', err);
+            return res.status(500).json({ error: 'Failed to fetch salary data' });
+        }
+
+        // Send the results back to the frontend
+        res.status(200).json(results);
+    });
+});
+
+app.get('/api/check-payment', (req, res) => {
+    const { user_id, month, year } = req.query;
+
+    const query = `
+        SELECT COUNT(*) AS payment_count
+        FROM salary_payments
+        WHERE user_id = ? AND payment_month = ? AND payment_year = ?;
+    `;
+
+    db.query(query, [user_id, month, year], (err, results) => {
+        if (err) {
+            console.error('Error checking payment:', err);
+            return res.status(500).json({ error: 'Failed to check payment' });
+        }
+
+        const exists = results[0].payment_count > 0;
+        res.status(200).json({ exists });
+    });
+});
+
+// API to process salary payments
+app.post('/api/process-salary', (req, res) => {
+    const { user_id, username, role_type, amount, payment_month, payment_year, payment_date } = req.body;
+
+    // Validate required fields
+    if (!user_id || !username || !role_type || !amount || !payment_month || !payment_year || !payment_date) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const query = `
+        INSERT INTO salary_payments 
+            (user_id, username, role_type, amount, payment_month, payment_year, payment_date) 
+        VALUES 
+            (?, ?, ?, ?, ?, ?, ?);
+    `;
+
+    db.query(query, [user_id, username, role_type, amount, payment_month, payment_year, payment_date], (err, results) => {
+        if (err) {
+            console.error('Error processing salary payment:', err);
+            return res.status(500).json({ error: 'Failed to process salary payment' });
+        }
+
+        res.status(200).json({ message: 'Salary payment processed successfully' });
+    });
+});
+
+app.get('/api/salary-report', (req, res) => {
+    const { year, month } = req.query;
+
+    const query = `
+        SELECT 
+            user_id, 
+            username, 
+            role_type, 
+            amount, 
+            payment_date
+        FROM salary_payments
+        WHERE payment_year = ? AND payment_month = ?;
+    `;
+
+    db.query(query, [year, month], (err, results) => {
+        if (err) {
+            console.error('Error fetching salary report:', err);
+            return res.status(500).json({ error: 'Failed to fetch salary report' });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {
