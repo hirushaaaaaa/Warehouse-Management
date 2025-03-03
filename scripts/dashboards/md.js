@@ -103,6 +103,65 @@ function closeSalesReportModal() {
     }
 }
 
+function viewFeedback() {
+    console.log("View Feedback button clicked");
+
+    // Fetch feedback data from the backend
+    fetch("http://localhost:5002/api/feedback", {
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to fetch feedback.');
+        }
+
+        const feedbackData = data.feedback;
+
+        if (feedbackData.length === 0) {
+            showModal("Customer Feedback", `
+                <h3>No Feedback Found</h3>
+                <p>There is no feedback available at the moment.</p>
+            `);
+            return;
+        }
+
+        // Create HTML for feedback table
+        const feedbackHtml = `
+            <div class="feedback-container">
+                <h3>Customer Feedback</h3>
+                <table class="feedback-table">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Feedback</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${feedbackData.map(feedback => `
+                            <tr>
+                                <td>${feedback.customer_name}</td>
+                                <td>${feedback.feedback}</td>
+                                <td>${new Date(feedback.created_at).toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // Display feedback in a modal
+        showModal("Customer Feedback", feedbackHtml);
+    })
+    .catch(error => {
+        console.error("Error fetching feedback:", error);
+        showModal("Error", "Failed to fetch feedback. Please try again later.");
+    });
+}
+
 function approveLetters() {
     // Fetch pending letters from the database
     fetch('http://localhost:5002/api/hr/letters')

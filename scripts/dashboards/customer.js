@@ -309,3 +309,173 @@ document.addEventListener("DOMContentLoaded", function() {
     fetchStockData(); // Initial stock data fetch
     setupBuyModalListeners(); // Set up event listeners for the buy modal
 });
+
+function giveFeedback() {
+    console.log("Feedback button clicked");
+
+    // Get the logged-in customer ID and token
+    const token = localStorage.getItem('token');
+    const customer = JSON.parse(localStorage.getItem('customer'));
+
+    if (!token || !customer) {
+        alert("You must be logged in to submit feedback.");
+        window.location.href = "/index.html"; // Redirect to login page
+        return;
+    }
+
+    const customerId = customer.id; // Get the customer ID from the logged-in customer
+
+    // Create feedback form dynamically
+    let formHtml = `
+        <div id="feedbackModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeFeedbackModal()">&times;</span>
+                <h2>Submit Feedback</h2>
+                <p>We value your feedback! Please let us know how we can improve.</p>
+                <form id="feedbackForm">
+                    <div class="form-group">
+                        <label for="feedback">Your Feedback:</label>
+                        <textarea id="feedback" rows="5" required placeholder="Enter your feedback here..."></textarea>
+                    </div>
+                    <button type="button" class="submit-btn" onclick="submitFeedback(${customerId})">Submit Feedback</button>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", formHtml);
+    document.getElementById("feedbackModal").style.display = "block";
+}
+
+// Close feedback modal
+function closeFeedbackModal() {
+    document.getElementById("feedbackModal").remove();
+}
+
+// Submit feedback
+function submitFeedback(customerId) {
+    const feedbackInput = document.getElementById("feedback");
+    const feedback = feedbackInput.value.trim();
+
+    if (!feedback) {
+        alert("Please enter your feedback before submitting.");
+        return;
+    }
+
+    // Send feedback request to the backend
+    fetch("http://localhost:5002/api/feedback", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ customer_id: customerId, feedback })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) { // Check for the success property
+            alert(data.message); // Show success message
+            closeFeedbackModal();
+        } else {
+            throw new Error(data.message); // Throw error if success is false
+        }
+    })
+    .catch(error => {
+        console.error("Error submitting feedback:", error);
+        alert(error.message); // Show error message
+    });
+}
+
+function shippingAddress() {
+    console.log("Shipping Address button clicked");
+
+    // Get the logged-in customer ID
+    const customer = JSON.parse(localStorage.getItem('customer'));
+    const customerId = customer?.id;
+
+    if (!customerId) {
+        alert("You must be logged in to update your shipping address.");
+        window.location.href = "/index.html"; // Redirect to login page
+        return;
+    }
+
+    // Fetch the current address (if any)
+    fetch(`http://localhost:5002/api/customers/${customerId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Parse response as JSON
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch address.');
+            }
+
+            const currentAddress = data.customer.address || ''; // Default to empty if address is NULL
+
+            // Create the address form dynamically
+            const formHtml = `
+                <div id="addressModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeAddressModal()">&times;</span>
+                        <h2>Shipping Address</h2>
+                        <form id="addressForm">
+                            <div class="form-group">
+                                <label for="address">Address:</label>
+                                <textarea id="address" rows="4" placeholder="Enter your shipping address...">${currentAddress}</textarea>
+                            </div>
+                            <button type="button" class="submit-btn" onclick="submitAddress(${customerId})">Save Address</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML("beforeend", formHtml);
+            document.getElementById("addressModal").style.display = "block";
+        })
+        .catch(error => {
+            console.error("Error fetching address:", error);
+            alert("Failed to fetch address. Please try again later.");
+        });
+}
+
+// Close address modal
+function closeAddressModal() {
+    document.getElementById("addressModal").remove();
+}
+
+// Submit address
+function submitAddress(customerId) {
+    const addressInput = document.getElementById("address");
+    const address = addressInput.value.trim();
+
+    if (!address) {
+        alert("Please enter a valid shipping address.");
+        return;
+    }
+
+    // Send the address to the backend
+    fetch("http://localhost:5002/api/customers/address", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ customer_id: customerId, address })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message); // Show success message
+            closeAddressModal();
+        } else {
+            throw new Error(data.message); // Throw error if success is false
+        }
+    })
+    .catch(error => {
+        console.error("Error updating address:", error);
+        alert(error.message); // Show error message
+    });
+}
+

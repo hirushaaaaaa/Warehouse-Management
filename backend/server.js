@@ -2729,6 +2729,113 @@ app.put('/api/productsss/:p_id', (req, res) => {
     );
 });
 
+// API endpoint to submit feedback
+app.post('/api/feedback', (req, res) => {
+    const { customer_id, feedback } = req.body;
+
+    // Validate input
+    if (!customer_id || !feedback) {
+        return res.status(400).json({ success: false, message: 'Customer ID and feedback are required.' });
+    }
+
+    // Insert feedback into the database
+    const query = 'INSERT INTO customer_feedback (customer_id, feedback) VALUES (?, ?)';
+    db.query(query, [customer_id, feedback], (err, results) => {
+        if (err) {
+            console.error('Error inserting feedback:', err);
+            return res.status(500).json({ success: false, message: 'Failed to submit feedback.' });
+        }
+        res.json({ success: true, message: 'Feedback submitted successfully!' });
+    });
+});
+
+// Endpoint to fetch feedback
+app.get('/api/feedback', (req, res) => {
+    const query = `
+        SELECT cf.feedback_id, cf.feedback, cf.created_at, c.name AS customer_name
+        FROM customer_feedback cf
+        JOIN customers c ON cf.customer_id = c.id
+        ORDER BY cf.created_at DESC
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching feedback:', err);
+            return res.status(500).json({ success: false, message: 'Failed to fetch feedback.' });
+        }
+        res.json({ success: true, feedback: results });
+    });
+});
+
+// Endpoint to fetch customer data
+app.get('/api/customers/:id', (req, res) => {
+    const customerId = req.params.id;
+
+    if (!customerId) {
+        return res.status(400).json({ success: false, message: 'Customer ID is required.' });
+    }
+
+    const query = 'SELECT id, name, email, address FROM customers WHERE id = ?';
+    db.query(query, [customerId], (err, results) => {
+        if (err) {
+            console.error('Error fetching customer data:', err);
+            return res.status(500).json({ success: false, message: 'Failed to fetch customer data.' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Customer not found.' });
+        }
+        res.json({ success: true, customer: results[0] }); // Return JSON response
+    });
+});
+
+// Endpoint to update shipping address
+app.put('/api/customers/address', (req, res) => {
+    const { customer_id, address } = req.body;
+
+    if (!customer_id) {
+        return res.status(400).json({ success: false, message: 'Customer ID is required.' });
+    }
+
+    const query = 'UPDATE customers SET address = ? WHERE id = ?';
+    db.query(query, [address, customer_id], (err, results) => {
+        if (err) {
+            console.error('Error updating address:', err);
+            return res.status(500).json({ success: false, message: 'Failed to update address.' });
+        }
+        res.json({ success: true, message: 'Address updated successfully!' });
+    });
+});
+
+app.get('/api/ccustomers/:id', (req, res) => {
+    const customerId = req.params.id;
+
+    if (!customerId) {
+        return res.status(400).json({ success: false, message: 'Customer ID is required.' });
+    }
+
+    const query = 'SELECT id, name, email, address FROM customers WHERE id = ?';
+    db.query(query, [customerId], (err, results) => {
+        if (err) {
+            console.error('Error fetching customer data:', err);
+            return res.status(500).json({ success: false, message: 'Failed to fetch customer data.' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ success: false, message: 'Customer not found.' });
+        }
+        res.json({ success: true, customer: results[0] }); // Return JSON response with address
+    });
+});
+
+app.get('/api/ccustomerss', (req, res) => {
+    const query = 'SELECT id, name, address FROM customers'; // Fetch all customers
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching customer details:', err);
+            return res.status(500).json({ success: false, message: 'Failed to fetch customer details.' });
+        }
+        res.json({ success: true, customers: results }); // Return JSON response
+    });
+});
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {

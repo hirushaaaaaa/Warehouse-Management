@@ -253,4 +253,71 @@ function viewTotalDeliveries() {
             showModal("Error", "Failed to fetch total deliveries. Please try again later.");
         });
 }
+function customerDetails() {
+    console.log("Customer Details button clicked");
+
+    // Fetch all customer details from the backend
+    fetch("http://localhost:5002/api/ccustomerss")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Parse response as JSON
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to fetch customer details.');
+            }
+
+            const customers = data.customers;
+
+            if (customers.length === 0) {
+                showModal("Customer Details", `
+                    <h3>No Customers Found</h3>
+                    <p>There are no customers in the database.</p>
+                `);
+                return;
+            }
+
+            // Create the customer details modal
+            const modalHtml = `
+                <div id="customerDetailsModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeCustomerDetailsModal()">&times;</span>
+                        <h2>Customer Details</h2>
+                        <table class="customer-details-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${customers.map(customer => `
+                                    <tr>
+                                        <td>${customer.id}</td>
+                                        <td>${customer.name}</td>
+                                        <td>${customer.address || 'No address provided'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+            document.getElementById("customerDetailsModal").style.display = "block";
+        })
+        .catch(error => {
+            console.error("Error fetching customer details:", error);
+            alert("Failed to fetch customer details. Please try again later.");
+        });
+}
+
+// Close customer details modal
+function closeCustomerDetailsModal() {
+    document.getElementById("customerDetailsModal").remove();
+}
 

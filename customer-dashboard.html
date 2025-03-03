@@ -10,17 +10,22 @@
     <header class="dashboard-header">
         <h1>Welcome to Dear Customer</h1>
         <div>
-            
+            <button class="header-btn" onclick="giveFeedback()">Feedback</button>
+            <button onclick="shippingAddress()" class="header-btn">
+                <span class="icon">📦</span>
+                Shipping Address
+            </button>
             <button class="header-btn" onclick="placeOrder()">Place Order</button>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </header>
     <main class="dashboard-main">
-        <section class="dashboard-section">
+        <<section class="dashboard-section">
             <h2>Your Profile</h2>
             <div class="profile-info">
                 <p><strong>Name:</strong> <span id="customerName"></span></p>
                 <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+                <p><strong>Shipping Address:</strong> <span id="customerAddress"></span></p>
             </div>
         </section>
         <section class="dashboard-section">
@@ -56,8 +61,36 @@
             } else {
                 document.getElementById('customerName').textContent = customer.name;
                 document.getElementById('customerEmail').textContent = customer.email;
-            }
-        });
+                 // Fetch and display the shipping address
+        fetchCustomerAddress(customer.id);
+    }
+});
+
+function fetchCustomerAddress(customerId) {
+    fetch(`http://localhost:5002/api/ccustomers/${customerId}`, {
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json(); // Parse response as JSON
+    })
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to fetch address.');
+        }
+
+        const address = data.customer.address || 'No address provided'; // Default message if address is NULL
+        document.getElementById('customerAddress').textContent = address;
+    })
+    .catch(error => {
+        console.error("Error fetching address:", error);
+        document.getElementById('customerAddress').textContent = 'Failed to load address.';
+    });
+}
 
         function logout() {
             localStorage.removeItem('token');
