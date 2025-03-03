@@ -2702,6 +2702,33 @@ app.get('/api/salary-report', (req, res) => {
     });
 });
 
+// Fetch all products
+app.get('/api/productsss', (req, res) => {
+    db.query('SELECT * FROM stocks', (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to fetch products' });
+        }
+        res.json(results);
+    });
+});
+
+// Update product price
+app.put('/api/productsss/:p_id', (req, res) => {
+    const { p_id } = req.params;
+    const { p_unitprice } = req.body;
+
+    db.query(
+        'UPDATE stocks SET p_unitprice = ? WHERE p_id = ?',
+        [p_unitprice, p_id],
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to update product price' });
+            }
+            res.json({ success: true, message: 'Price updated successfully' });
+        }
+    );
+});
+
 // Start the server
 const PORT = 5002;
 app.listen(PORT, () => {

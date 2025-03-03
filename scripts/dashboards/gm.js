@@ -697,6 +697,102 @@ function supplierStock() {
     });
 }
 
+function updateStockPrice() {
+    // Fetch the list of products from the database
+    fetch('http://localhost:5002/api/productsss')
+        .then(response => response.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                showModal("Update Stock Price", `
+                    <h3>No Products Found</h3>
+                    <p>There are no products available to update.</p>
+                `);
+                return;
+            }
+
+            // Create a dropdown to select a product
+            const productOptions = data.map(product => `
+                <option value="${product.p_id}">
+                    ${product.p_name} (Current Price: Rs.${product.p_unitprice})
+                </option>
+            `).join('');
+
+            // Display the modal with the dropdown and form
+            showModal("Update Stock Price", `
+                <h3>Select a Product to Update</h3>
+                <select id="product-select">
+                    <option value="">-- Select a Product --</option>
+                    ${productOptions}
+                </select>
+                <div id="price-update-form" style="display: none; margin-top: 20px;">
+                    <label for="current-price">Current Price:</label>
+                    <input type="text" id="current-price" readonly>
+                    <label for="new-price">New Price:</label>
+                    <input type="number" id="new-price" step="0.01" min="0">
+                    <button onclick="submitPriceUpdate()">Update Price</button>
+                </div>
+            `);
+
+            // Add event listener to the dropdown
+            const productSelect = document.getElementById('product-select');
+            const priceUpdateForm = document.getElementById('price-update-form');
+            const currentPriceInput = document.getElementById('current-price');
+            const newPriceInput = document.getElementById('new-price');
+
+            productSelect.addEventListener('change', () => {
+                const selectedProductId = productSelect.value;
+                if (selectedProductId) {
+                    const selectedProduct = data.find(product => product.p_id === selectedProductId);
+                    currentPriceInput.value = selectedProduct.p_unitprice;
+                    priceUpdateForm.style.display = 'block';
+                } else {
+                    priceUpdateForm.style.display = 'none';
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching products:', error);
+            showModal("Error", "Failed to fetch products. Please try again later.");
+        });
+}
+
+// Function to submit the updated price
+function submitPriceUpdate() {
+    const productSelect = document.getElementById('product-select');
+    const newPriceInput = document.getElementById('new-price');
+    const selectedProductId = productSelect.value;
+    const newPrice = newPriceInput.value;
+
+    if (!selectedProductId || !newPrice) {
+        alert('Please select a product and enter a new price.');
+        return;
+    }
+
+    // Send the update request to the server
+    fetch(`http://localhost:5002/api/productsss/${selectedProductId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_unitprice: newPrice })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Price updated successfully!');
+            newPriceInput.value = ''; // Clear the form
+            productSelect.value = ''; // Reset dropdown
+            document.getElementById('price-update-form').style.display = 'none'; // Hide form
+        } else {
+            throw new Error(data.message || 'Failed to update price.');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating price:', error);
+        alert('Failed to update price. Please try again.');
+    });
+}
+
 
 function logout() {
     if (confirm("Are you sure you want to logout?")) {
