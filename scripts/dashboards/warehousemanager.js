@@ -94,8 +94,8 @@ function viewUpcomingDeliveries() {
             `).join('');
 
              // Show modal with scrollable content
-             showModal("Payroll Management", `
-                <h3>Payroll Data</h3>
+             showModal("Upcoming Deliveries", `
+                <h3>Delivery Data</h3>
                 <div class="scrollable-modal-content">
                     ${deliveriesHtml}
                 </div>
