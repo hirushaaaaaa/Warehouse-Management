@@ -7,13 +7,68 @@ function showGMDashboard() {
 
 // General Manager Functions
 function checkReports() {
-    showModal("Reports Overview", `
-        <h3>Available Reports</h3>
-        <div class="no-data-message">
-            <p>No reports found. Database integration pending.</p>
-        </div>
-    `);
-}
+    
+        // Close any existing modal before opening a new one
+        closeModal();  // Close any existing modal if open
+        
+        // Show loading modal (can be omitted if no need for loading state)
+        //showModal("Report", `<h3>Loading report data...</h3>`);
+    
+        fetch('http://localhost:5002/api/stock/report')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    throw new Error("Failed to fetch report data.");
+                }
+    
+                const reportContent = `
+                    <h3>Stock Management Report</h3>
+                    <div class="scrollable-modal-content">
+                        <div class="report-section">
+                            <h4>Total Stock Arrivals</h4>
+                            <p>Good Stock: ${data.totalArrivals.good_stock}</p>
+                            <p>Damaged Stock: ${data.totalArrivals.damaged_stock}</p>
+                            <p>Raw Stock: ${data.totalArrivals.raw_stock}</p>
+                        </div>
+                        <div class="report-section">
+                            <h4>Total Stock Departures</h4>
+                            <p>Total Departures: ${data.totalDepartures.total_departures}</p>
+                        </div>
+                        <div class="report-section">
+                            <h4>Customer Orders</h4>
+                            <p>Pending Orders: ${data.pendingOrders.pending_orders}</p>
+                            <p>Completed Orders: ${data.completedOrders.completed_orders}</p>
+                        </div>
+                        <div class="report-section">
+                            <h4>Stock Levels</h4>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Product ID</th>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.stockLevels.map(stock => `
+                                        <tr>
+                                            <td>${stock.p_id}</td>
+                                            <td>${stock.p_name}</td>
+                                            <td>${stock.p_quantity}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                showModal("Report", reportContent);
+            })
+            .catch(error => {
+                console.error('Error generating report:', error);
+                showModal("Error", "Failed to generate report. Please try again later.");
+            });
+    }
 
 function manageOrderApprovals() {
     fetch('http://localhost:5002/api/gm/all-orders')

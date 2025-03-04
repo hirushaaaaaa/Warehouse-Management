@@ -121,7 +121,7 @@ function checkDamagedStock() {
             // Creating the table content dynamically
             const tableContent = `
                 <h3>Damaged Stock Overview</h3>
-                <div class="table-responsive">
+                <div class="scrollable-modal-content">
                     <table class="table table-striped">
                         <thead>
                             <tr>
